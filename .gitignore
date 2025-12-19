@@ -1,0 +1,63 @@
+# --- Python Bytecode (Archivos compilados) ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Entornos Virtuales (Virtual Environments) ---
+# Nombres comunes para carpetas de entornos virtuales
+env/
+venv/
+.venv/
+.env/
+env.bak/
+venv.bak/
+
+# --- Distribución y Empaquetado ---
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+MANIFEST
+
+# --- Instaladores y Ejecutables ---
+*.spec
+installer/
+
+# --- Archivos de configuración de IDEs (Editores de código) ---
+# VS Code
+.vscode/
+# PyCharm / IntelliJ
+.idea/
+# Sublime Text
+*.sublime-workspace
+
+# --- Jupyter Notebooks ---
+.ipynb_checkpoints
+
+# --- Pruebas y Cobertura (Testing & Coverage) ---
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# --- Bases de Datos Locales ---
+*.sqlite3
+db.sqlite3
+
+# --- Variables de Entorno y Secretos (¡MUY IMPORTANTE!) ---
+# Nunca subas tus claves API o contraseñas
+.env
+.env.local
+.env.*.local
+
+# --- Archivos del Sistema Operativo ---
+# macOS
+.DS_Store
+# Windows
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# --- Logs y Errores ---
+*.log
