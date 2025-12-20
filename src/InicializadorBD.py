@@ -72,15 +72,16 @@ class InicializadorDB:
             contenido REAL NOT NULL, 
             precio_compra REAL NOT NULL,
             precio_venta REAL NOT NULL,
-            stock_maximo INTEGER NOT NULL,
+            stock_minimo INTEGER NOT NULL,
             stock_actual INTEGER NOT NULL,
             estatus INTEGER NOT NULL,
             
             FOREIGN KEY (id_categoria) REFERENCES categoria(id_categoria),
             FOREIGN KEY (id_marca) REFERENCES marca(id_marca),
-            
-            -- Restricción: stock_actual <= stock_maximo
-            CHECK (stock_actual <= stock_maximo)
+            CHECK (stock_actual >= 0),
+            CHECK (stock_minimo >= 0),
+            CHECK (precio_compra >= 0),
+            CHECK (precio_venta >= 0)
         );
 
         -- 5. Tabla Transacción
@@ -151,7 +152,7 @@ class InicializadorDB:
             sql_prod = """
             INSERT INTO producto (
                 nombre_producto, id_categoria, id_marca, presentacion, unidad_medida, 
-                contenido, precio_compra, precio_venta, stock_maximo, stock_actual, estatus
+                contenido, precio_compra, precio_venta, stock_minimo, stock_actual, estatus
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             
@@ -200,7 +201,7 @@ class InicializadorDB:
             self.db.desconectar()
 
 # --- Bloque de prueba (Main) ---
-"""
+
 if __name__ == "__main__":
     init_db = InicializadorDB()
     
@@ -213,4 +214,3 @@ if __name__ == "__main__":
     init_db.insertar_datos_semilla()
     
     print("Proceso finalizado.")
-"""
