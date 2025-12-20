@@ -1,7 +1,7 @@
 import customtkinter as ctk
 from tkinter import ttk
 import tkinter as tk
-from VistaNuevaTransac import VistaNuevaTransac
+from vistas.VistaNuevaTransac import VistaNuevaTransac
 
 class VistaTransac(ctk.CTkFrame):
     def __init__(self, parent, controller):

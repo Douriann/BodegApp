@@ -1,8 +1,8 @@
 import customtkinter as ctk
 # Importamos las clases desde la carpeta 'vistas'
-from VistaDashboard import VistaDashboard
-from VistaProductos import VistaProductos
-from VistaTransac import VistaTransac
+from vistas.VistaDashboard import VistaDashboard
+from vistas.VistaProductos import VistaProductos
+from vistas.VistaTransac import VistaTransac
 
 # Configuración inicial de CustomTkinter
 ctk.set_appearance_mode("System")  # "System", "Dark", "Light"

@@ -1,5 +1,5 @@
 import sqlite3
-from ConexionBD import ConexionBD
+from servicios.ConexionBD import ConexionBD
 
 class InicializadorDB:
     def __init__(self):

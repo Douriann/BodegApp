@@ -1,7 +1,7 @@
-from ConexionBD import ConexionDB
+from servicios.ConexionBD import ConexionBD
 
 def probar_conexion():
-    conexion_db = ConexionDB()
+    conexion_db = ConexionBD()
     conexion = conexion_db.conectar()
     if conexion:
         print("Conexión exitosa a la base de datos.")
