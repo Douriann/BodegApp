@@ -2,6 +2,7 @@ import customtkinter as ctk
 from tkinter import ttk
 import tkinter as tk
 from vistas.VistaNuevaTransac import VistaNuevaTransac
+from servicios.ServTransac import ServTransac
 
 class VistaTransac(ctk.CTkFrame):
     def __init__(self, parent, controller):
@@ -59,7 +60,7 @@ class VistaTransac(ctk.CTkFrame):
         self.tree.pack(side="left", fill="both", expand=True)
 
         # Datos iniciales de prueba
-        self.cargar_datos_prueba()
+        self.cargar_datos()
 
     def configurar_estilo_tabla(self):
         style = ttk.Style()
@@ -87,14 +88,19 @@ class VistaTransac(ctk.CTkFrame):
                   background=[("selected", selected_bg)],
                   foreground=[("selected", "white")])
 
-    def cargar_datos_prueba(self):
-        # Insertar algunos datos iniciales
-        datos = [
-            ("001", "Venta Inicial", "2023-10-01", "+$100.00"),
-            ("002", "Pago Luz", "2023-10-02", "-$50.00")
-        ]
-        for d in datos:
-            self.tree.insert("", "end", values=d)
+    def cargar_datos(self):
+        servicio = ServTransac()
+        transacciones = servicio.consultar_transacciones()
+
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+
+        for transac in transacciones:
+
+            val_tipo = "Compra" if transac.id_tipo == 1 else "Venta"
+
+            self.tree.insert("", "end", values=(transac.id_transaccion, transac.fecha_transaccion, val_tipo,
+                                                 transac.total, transac.observaciones))
 
     def abrir_ventana_nueva(self):
         # Verificar si ya existe

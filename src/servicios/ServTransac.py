@@ -27,7 +27,7 @@ class ServTransac:
                 # fila es: (1, '2023-10-01', 150.0, ...)
                 
                 # Creamos el objeto Transaccion pasándole los datos de la fila en orden
-                transaccion = Transaccion(fila[0], fila[1], fila[2], fila[3], fila[4])
+                transaccion = Transaccion(fila[0], fila[1], fila[2], fila[3], fila[4], fila[5])
                 lista_objetos_transaccion.append(transaccion)
         except sqlite3.Error as e:
             print(f"Error al consultar transacciones: {e}")
