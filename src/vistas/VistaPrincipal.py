@@ -52,7 +52,7 @@ class VistaPrincipal(ctk.CTk):
             font=ctk.CTkFont(family="Verdana", size=16, weight="bold"),
             fg_color="#9B3D95",       # Morado claro
             hover_color="#7f2376",    # Morado oscuro 
-            command=lambda: self.show_frame("VistaDashboard")
+            command=lambda: self.show_frame("VistaProductos")
         )
         self.btn_prod.grid(row=2, column=0, padx=0, pady=0, sticky="ew")
 
@@ -65,7 +65,7 @@ class VistaPrincipal(ctk.CTk):
             font=ctk.CTkFont(family="Verdana", size=16, weight="bold"),
             fg_color="#9B3D95",       # Morado claro
             hover_color="#7f2376",    # Morado oscuro 
-            command=lambda: self.show_frame("VistaDashboard")
+            command=lambda: self.show_frame("VistaTransac")
         )
         self.btn_tran.grid(row=3, column=0, padx=0, pady=0, sticky="ew")
 

@@ -13,34 +13,42 @@ class VistaTransac(ctk.CTkFrame):
         header_frame = ctk.CTkFrame(self, fg_color="transparent")
         header_frame.pack(fill="x", padx=20, pady=20)
 
+        detalles_frame = ctk.CTkFrame(self, fg_color="transparent")
+        detalles_frame.pack(fill="x", padx=20, pady=(0,10))
+
         self.titulo = ctk.CTkLabel(header_frame, text="Historial de Transacciones", font=("Roboto", 24, "bold"))
         self.titulo.pack(side="left")
 
         self.btn_add = ctk.CTkButton(header_frame, text="+ Nueva Transacción", command=self.abrir_ventana_nueva)
         self.btn_add.pack(side="right")
 
+        self.label_detalles = ctk.CTkLabel(detalles_frame, text="Detalles de la transacción", font=("Roboto", 14))
+        self.label_detalles.pack(side="right")
+
         # --- TABLA Y SCROLL ---
         self.tree_frame = ctk.CTkFrame(self, fg_color="transparent") 
-        self.tree_frame.pack(pady=10, padx=20, fill="both", expand=True)
+        self.tree_frame.pack(pady=10, padx=20, fill="x", expand=True)
 
         # Configurar estilo (Tema oscuro para el Treeview de Tkinter)
         self.configurar_estilo_tabla()
 
         # Definir Columnas
-        columns = ("id", "desc", "fecha", "monto")
+        columns = ("id", "fecha", "tipo", "total", "observaciones")
         self.tree = ttk.Treeview(self.tree_frame, columns=columns, show="headings", selectmode="browse")
         
         # Encabezados
         self.tree.heading("id", text="ID")
-        self.tree.heading("desc", text="Descripción")
         self.tree.heading("fecha", text="Fecha")
-        self.tree.heading("monto", text="Monto")
+        self.tree.heading("tipo", text="Tipo")
+        self.tree.heading("total", text="Total")
+        self.tree.heading("observaciones", text="Observaciones")
 
         # Ancho y alineación
         self.tree.column("id", width=50, anchor="center")
-        self.tree.column("desc", width=300, anchor="w")
-        self.tree.column("fecha", width=120, anchor="center")
-        self.tree.column("monto", width=100, anchor="e")
+        self.tree.column("fecha", width=300, anchor="center")
+        self.tree.column("tipo", width=120, anchor="center")
+        self.tree.column("total", width=100, anchor="center")
+        self.tree.column("observaciones", width=200, anchor="center")
 
         # Scrollbar de CustomTkinter
         self.scrollbar = ctk.CTkScrollbar(self.tree_frame, orientation="vertical", command=self.tree.yview)
