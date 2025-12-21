@@ -22,22 +22,52 @@ class VistaPrincipal(ctk.CTk):
         self.grid_rowconfigure(0, weight=1)
 
         # --- 1. CREACIÓN DEL SIDEBAR ---
-        self.sidebar_frame = ctk.CTkFrame(self, width=200, corner_radius=0)
-        self.sidebar_frame.grid(row=0, column=0, sticky="nsew")
+        self.sidebar_frame = ctk.CTkFrame(self, width=200, fg_color="#9B3D95")
+        self.sidebar_frame.grid(row=0, column=0, sticky="nse" )
         self.sidebar_frame.grid_rowconfigure(4, weight=1) # Espacio al final
 
-        self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="Mi Empresa", font=ctk.CTkFont(size=20, weight="bold"))
-        self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
+        self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="BodegApp", font=ctk.CTkFont(size=35, weight="bold"))
+        self.logo_label.grid(row=0, column=0, padx=20, pady=(30, 40))
 
         # Botones de navegación
-        self.btn_dash = ctk.CTkButton(self.sidebar_frame, text="Dashboard", command=lambda: self.show_frame("VistaDashboard"))
-        self.btn_dash.grid(row=1, column=0, padx=20, pady=10)
+        self.btn_dash = ctk.CTkButton(
+            self.sidebar_frame, 
+            text="Dashboard",
+            width=200,   # Ancho en píxeles
+            height=50,   # Alto en píxeles
+            corner_radius=0,
+            font=ctk.CTkFont(family="Verdana", size=16, weight="bold"),
+            fg_color="#9B3D95",       # Morado claro
+            hover_color="#7f2376",    # Morado oscuro 
+            command=lambda: self.show_frame("VistaDashboard")
+          )
+        self.btn_dash.grid(row=1, column=0, padx=0, pady=0, sticky="ew")
 
-        self.btn_prod = ctk.CTkButton(self.sidebar_frame, text="Productos", command=lambda: self.show_frame("VistaProductos"))
-        self.btn_prod.grid(row=2, column=0, padx=20, pady=10)
+        self.btn_prod = ctk.CTkButton(
+            self.sidebar_frame, 
+            text="Productos",
+            width=200,   # Ancho en píxeles
+            height=50,   # Alto en píxeles
+            corner_radius=0,
+            font=ctk.CTkFont(family="Verdana", size=16, weight="bold"),
+            fg_color="#9B3D95",       # Morado claro
+            hover_color="#7f2376",    # Morado oscuro 
+            command=lambda: self.show_frame("VistaDashboard")
+        )
+        self.btn_prod.grid(row=2, column=0, padx=0, pady=0, sticky="ew")
 
-        self.btn_tran = ctk.CTkButton(self.sidebar_frame, text="Transacciones", command=lambda: self.show_frame("VistaTransac"))
-        self.btn_tran.grid(row=3, column=0, padx=20, pady=10)
+        self.btn_tran = ctk.CTkButton(
+            self.sidebar_frame, 
+            text="Transaccion",
+            width=200,   # Ancho en píxeles
+            height=50,   # Alto en píxeles
+            corner_radius=0,
+            font=ctk.CTkFont(family="Verdana", size=16, weight="bold"),
+            fg_color="#9B3D95",       # Morado claro
+            hover_color="#7f2376",    # Morado oscuro 
+            command=lambda: self.show_frame("VistaDashboard")
+        )
+        self.btn_tran.grid(row=3, column=0, padx=0, pady=0, sticky="ew")
 
         # --- 2. ÁREA DE CONTENIDO CENTRAL ---
         self.main_container = ctk.CTkFrame(self, corner_radius=0, fg_color="transparent")
