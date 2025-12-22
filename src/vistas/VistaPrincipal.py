@@ -3,6 +3,7 @@ import customtkinter as ctk
 from vistas.VistaDashboard import VistaDashboard
 from vistas.VistaProductos import VistaProductos
 from vistas.VistaTransac import VistaTransac
+from PIL import Image
 
 # Configuración inicial de CustomTkinter
 ctk.set_appearance_mode("System")  # "System", "Dark", "Light"
@@ -30,9 +31,13 @@ class VistaPrincipal(ctk.CTk):
         self.logo_label.grid(row=0, column=0, padx=20, pady=(30, 40))
 
         # Botones de navegación
+        # Ahora que 'recursos' está al lado de 'main.py', esta ruta funcionará:
+        icono_dash = ctk.CTkImage(Image.open("recursos/icons-panel-de-control.png"), size=(26, 26))
+
         self.btn_dash = ctk.CTkButton(
             self.sidebar_frame, 
             text="Dashboard",
+            image=icono_dash,
             width=200,   # Ancho en píxeles
             height=50,   # Alto en píxeles
             corner_radius=0,
