@@ -29,7 +29,7 @@ class VistaPrincipal(ctk.CTk):
         self.grid_rowconfigure(0, weight=1)
 
         # --- CREACIÓN DEL SIDEBAR ---
-        self.sidebar_frame = ctk.CTkFrame(self, width=240, fg_color="#9B3D95")
+        self.sidebar_frame = ctk.CTkFrame(self, width=240, fg_color="#c06ef7")
         self.sidebar_frame.grid(row=0, column=0, sticky="nse")
         
         # El weight=1 en la fila 4 empuja todo lo que sigue hacia abajo
@@ -57,12 +57,12 @@ class VistaPrincipal(ctk.CTk):
             self.sidebar_frame, 
             text="Dashboard", 
             image=icono_dash,
-            width=230, 
+            width=238, 
             height=50, 
             corner_radius=0,
             font=ctk.CTkFont(family="Arial", size=16, weight="bold"),
-            fg_color="#9B3D95", 
-            hover_color="#7f2376", 
+            fg_color="#c06ef7", 
+            hover_color="#ab3df4", 
             anchor="w", 
             border_spacing=10,
             command=lambda: self.show_frame("VistaDashboard")
@@ -77,8 +77,8 @@ class VistaPrincipal(ctk.CTk):
             height=50, 
             corner_radius=0,
             font=ctk.CTkFont(family="Arial", size=16, weight="bold"),
-            fg_color="#9B3D95", 
-            hover_color="#7f2376", 
+            fg_color="#c06ef7", 
+            hover_color="#ab3df4", 
             anchor="w", 
             border_spacing=10,
             command=lambda: self.show_frame("VistaProductos")
@@ -93,8 +93,8 @@ class VistaPrincipal(ctk.CTk):
             height=50, 
             corner_radius=0,
             font=ctk.CTkFont(family="Arial", size=16, weight="bold"),
-            fg_color="#9B3D95", 
-            hover_color="#7f2376", 
+            fg_color="#c06ef7", 
+            hover_color="#ab3df4", 
             anchor="w", 
             border_spacing=10,
             command=lambda: self.show_frame("VistaTransac")
@@ -120,11 +120,11 @@ class VistaPrincipal(ctk.CTk):
             values=["Claro", "Oscuro", "Sistema"],
             command=self.change_appearance_mode_event,
             height=35,
-            fg_color="#7f2376",          # Color del fondo (morado oscuro)
-            button_color="#7f2376",      # Color del botón/flecha
-            button_hover_color="#5e1a58", # Color al pasar el mouse
-            dropdown_fg_color="#7f2376",  # Color de la lista desplegable
-            dropdown_hover_color="#5e1a58"
+            fg_color="#ab3df4",          # Color del fondo (morado oscuro)
+            button_color="#ab3df4",      # Color del botón/flecha
+            button_hover_color="#780ac1", # Color al pasar el mouse
+            dropdown_fg_color="#ab3df4",  # Color de la lista desplegable
+            dropdown_hover_color="#780ac1"
         )
         self.appearance_mode_optionemenu.grid(row=6, column=0, padx=15, pady=(10, 20), sticky="ew")
         self.appearance_mode_optionemenu.set("Sistema")
