@@ -3,6 +3,7 @@ from tkinter import ttk
 import tkinter as tk
 from vistas.VistaNuevaTransac import VistaNuevaTransac
 from servicios.ServTransac import ServTransac
+from servicios.ServProdTransac import ServProdTransac
 
 class VistaTransac(ctk.CTkFrame):
     def __init__(self, parent, controller):
@@ -59,6 +60,9 @@ class VistaTransac(ctk.CTkFrame):
         self.scrollbar.pack(side="right", fill="y")
         self.tree.pack(side="left", fill="both", expand=True)
 
+        # Evento para selección de fila
+        self.tree.bind("<<TreeviewSelect>>", self.seleccionar_transaccion)
+
         # Datos iniciales de prueba
         self.cargar_datos()
 
@@ -101,6 +105,24 @@ class VistaTransac(ctk.CTkFrame):
 
             self.tree.insert("", "end", values=(transac.id_transaccion, transac.fecha_transaccion, val_tipo,
                                                  transac.total, transac.observaciones))
+            
+
+    def seleccionar_transaccion(self, event):
+        selected_item = self.tree.focus()
+        if selected_item:
+            transac_values = self.tree.item(selected_item, "values")
+            id_transaccion = transac_values[0]
+            servicio_detalles = ServProdTransac()
+            detalles = servicio_detalles.consultar_detalles_por_transaccion(id_transaccion)
+            if detalles:
+                detalles_text = "Detalles de la transacción:\n"
+                for detalle in detalles:
+                    detalles_text += f"- {detalle.nombre_producto} ({detalle.nombre_marca}): Cantidad {detalle.cantidad_producto}\n"  
+                self.label_detalles.configure(text=detalles_text)
+            else:
+                self.label_detalles.configure(text="No hay detalles para esta transacción.")
+                
+
 
     def abrir_ventana_nueva(self):
         # Verificar si ya existe
