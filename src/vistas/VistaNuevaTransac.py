@@ -1,4 +1,5 @@
 from tkinter import ttk
+from tkinter import messagebox
 import customtkinter as ctk
 from servicios.ServBusqProduc import ServBusqProduc
 
@@ -75,7 +76,7 @@ class VistaNuevaTransac(ctk.CTkToplevel):
         self.anadir_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.anadir_frame.pack(pady=10,  side="bottom")
 
-        self.btn_agregar = ctk.CTkButton(self.anadir_frame, text="Agregar Producto", width=150)
+        self.btn_agregar = ctk.CTkButton(self.anadir_frame, text="Agregar Producto", width=150, command=self.actualizar_detalles_transaccion)
         self.btn_agregar.pack(side="left", padx=(0,10))
         # frame dentro del frame añadir para los botones de cantidad
         self.cantidad_frame = ctk.CTkFrame(self.anadir_frame, fg_color="transparent")
@@ -94,6 +95,8 @@ class VistaNuevaTransac(ctk.CTkToplevel):
         self.detalles_frame.pack(pady=10, padx=20, fill="y", side="right")
         self.label_detalles = ctk.CTkLabel(self.detalles_frame, text="Detalles de la Transacción", font=("Roboto", 16, "bold"))
         self.label_detalles.pack(pady=10)
+        self.label_detalles_info = ctk.CTkLabel(self.detalles_frame, text="", font=("Roboto", 12))
+        self.label_detalles_info.pack(pady=10)
 
         self.mostrar_productos()
 
@@ -146,3 +149,23 @@ class VistaNuevaTransac(ctk.CTkToplevel):
     def reducir_cantidad(self):
         cantidad_actual = int(self.label_cantidad.cget("text"))
         self.actualizar_cantidad(cantidad_actual - 1)
+    # creacion de metodo para actualizar los detalles de la transaccion
+    def actualizar_detalles_transaccion(self):
+        if self.tabla_productos.selection():
+            selected_item = self.tabla_productos.focus()
+            producto_values = self.tabla_productos.item(selected_item, "values")
+            id_producto = producto_values[0]
+            nombre_producto = producto_values[1]
+            cantidad = self.label_cantidad.cget("text")
+            detalles_text = f"Producto ID: {id_producto}\nNombre: {nombre_producto}\nCantidad: {cantidad}"
+            valor_anterio = self.label_detalles_info.cget("text")
+            if int(cantidad) > int(producto_values[3]):
+                messagebox.showerror("Error", "Cantidad solicitada excede el stock disponible.")
+                self.label_cantidad.configure(text="1")
+                return
+            if valor_anterio:
+                detalles_text += f"\n {valor_anterio}"
+            self.label_detalles_info.configure(text=detalles_text)
+            self.label_cantidad.configure(text="1")
+        else:
+            return
