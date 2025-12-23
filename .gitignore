@@ -42,6 +42,7 @@ htmlcov/
 .tox/
 
 # --- Bases de Datos Locales ---
+base_de_datos/
 *.sqlite3
 db.sqlite3
 bodega.db
