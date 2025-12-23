@@ -3,6 +3,7 @@ from vistas.VistaDashboard import VistaDashboard
 from vistas.VistaProductos import VistaProductos
 from vistas.VistaTransac import VistaTransac
 from PIL import Image
+from ConfigRutas import rutas
 
 
 class VistaPrincipal(ctk.CTk):
@@ -37,7 +38,7 @@ class VistaPrincipal(ctk.CTk):
 
         # --- SECCIÓN DEL LOGO (Imagen + Texto) ---
         # Definir la imagen
-        logo_img = ctk.CTkImage(Image.open("recursos/logo-bodegApp-blanco.png"), size=(170, 70))
+        logo_img = ctk.CTkImage(Image.open(rutas.obtener_ruta_imagen("logo-bodegApp-blanco.png")), size=(170, 70))
 
         # Contenedor de la IMAGEN (Fila 0)
         self.logo_container = ctk.CTkLabel(
@@ -48,9 +49,9 @@ class VistaPrincipal(ctk.CTk):
         self.logo_container.grid(row=0, column=0, pady=(20, 25), padx=10)
 
         # Iconos
-        icono_dash = ctk.CTkImage(Image.open("recursos/icons-panel-de-control.png"), size=(26, 26))
-        icono_prod = ctk.CTkImage(Image.open("recursos/icons-productos.png"), size=(26, 26))
-        icono_tran = ctk.CTkImage(Image.open("recursos/icons-transaccion.png"), size=(26, 26))
+        icono_dash = ctk.CTkImage(Image.open(rutas.obtener_ruta_imagen("icons-panel-de-control.png")), size=(26, 26))
+        icono_prod = ctk.CTkImage(Image.open(rutas.obtener_ruta_imagen("icons-productos.png")), size=(26, 26))
+        icono_tran = ctk.CTkImage(Image.open(rutas.obtener_ruta_imagen("icons-transaccion.png")), size=(26, 26))
 
         # Botones de navegación
         self.btn_dash = ctk.CTkButton(

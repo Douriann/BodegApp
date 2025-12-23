@@ -66,6 +66,7 @@ class VistaTransac(ctk.CTkFrame):
         # Datos iniciales de prueba
         self.cargar_datos()
 
+    #Caracteristicas o Estrucutura de la tabla
     def configurar_estilo_tabla(self):
         style = ttk.Style()
         style.theme_use("clam")
@@ -91,7 +92,8 @@ class VistaTransac(ctk.CTkFrame):
         style.map("Treeview",
                   background=[("selected", selected_bg)],
                   foreground=[("selected", "white")])
-
+    
+    #Carga ls datos en la tabla
     def cargar_datos(self):
         servicio = ServTransac()
         transacciones = servicio.consultar_transacciones()
@@ -106,7 +108,7 @@ class VistaTransac(ctk.CTkFrame):
             self.tree.insert("", "end", values=(transac.id_transaccion, transac.fecha_transaccion, val_tipo,
                                                  transac.total, transac.observaciones))
             
-
+    #Me muestra los detalles
     def seleccionar_transaccion(self, event):
         selected_item = self.tree.focus()
         if selected_item:
@@ -123,7 +125,7 @@ class VistaTransac(ctk.CTkFrame):
                 self.label_detalles.configure(text="No hay detalles para esta transacción.")
                 
 
-
+    #Funcion para el Boton de nueva transaccion
     def abrir_ventana_nueva(self):
         # Verificar si ya existe
         if self.ventana_toplevel is None or not self.ventana_toplevel.winfo_exists():
@@ -132,7 +134,8 @@ class VistaTransac(ctk.CTkFrame):
             self.ventana_toplevel.after(100, self.ventana_toplevel.lift) # Truco para asegurar foco
         else:
             self.ventana_toplevel.focus()
-
+    
+    #Metodo de ejemplo
     def recibir_datos_nuevos(self, datos):
         """ Este método es llamado por la ventana hija """
         print(f"Recibiendo datos: {datos}")
