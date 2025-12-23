@@ -1,5 +1,6 @@
 from tkinter import ttk
 import customtkinter as ctk
+from servicios.ServBusqProduc import ServBusqProduc
 
 class VistaNuevaTransac(ctk.CTkToplevel):
     def __init__(self, parent):
@@ -18,7 +19,7 @@ class VistaNuevaTransac(ctk.CTkToplevel):
         self.entry_buscar = ctk.CTkEntry(self.producto_frame, placeholder_text="Buscar producto por nombre", width=250)
         self.entry_buscar.pack(side="left", padx=(0,10))
 
-        self.btn_buscar = ctk.CTkButton(self.producto_frame, text="Buscar", width=80)
+        self.btn_buscar = ctk.CTkButton(self.producto_frame, text="Buscar", width=80, command=self.mostrar_producto_busqueda)
         self.btn_buscar.pack(side="left")
 
         # Creacion de tabla de productos
@@ -64,7 +65,7 @@ class VistaNuevaTransac(ctk.CTkToplevel):
         self.entry_desc.pack(pady=10)
 
         # 3. Botones de Acción
-        self.btn_guardar = ctk.CTkButton(self.form_frame, text="Guardar", command=self.guardar_datos, fg_color="#2CC985", hover_color="#26A46E")
+        self.btn_guardar = ctk.CTkButton(self.form_frame, text="Guardar", fg_color="#2CC985", hover_color="#26A46E")
         self.btn_guardar.pack(pady=20)
 
         self.btn_cancelar = ctk.CTkButton(self.form_frame, text="Cancelar", command=self.destroy, fg_color="transparent", border_width=1)
@@ -94,15 +95,43 @@ class VistaNuevaTransac(ctk.CTkToplevel):
         self.label_detalles = ctk.CTkLabel(self.detalles_frame, text="Detalles de la Transacción", font=("Roboto", 16, "bold"))
         self.label_detalles.pack(pady=10)
 
-    def guardar_datos(self):
-        # Aquí capturas los datos
-        desc = self.entry_desc.get()
-        monto = self.entry_monto.get()
-        tipo = self.combo_tipo.get()
+        self.mostrar_productos()
 
-        print(f"Guardando: {desc} | {monto} | {tipo}")
-        
-        # Aquí iría la lógica para guardarlo en BD o actualizar la tabla anterior
-        
-        # Al finalizar, cerramos la ventana
-        self.destroy()
+    def mostrar_productos(self):
+        """
+        Llena la tabla de productos con una lista de objetos Producto.
+        """
+        # Limpiar la tabla antes de llenarla
+        for item in self.tabla_productos.get_children():
+            self.tabla_productos.delete(item)
+
+        # Instanciar el servicio de búsqueda de productos
+        servicio = ServBusqProduc()
+        lista_productos = servicio.buscar_productos_totales()
+
+        for producto in lista_productos:
+            self.tabla_productos.insert("", "end", values=(
+                producto.id_producto,
+                producto.nombre_producto,
+                producto.id_marca,
+                producto.stock_actual
+            ))
+
+    def mostrar_producto_busqueda(self):
+        """
+        Llena la tabla de productos con una lista de objetos Producto.
+        """
+        # Limpiar la tabla antes de llenarla
+        for item in self.tabla_productos.get_children():
+            self.tabla_productos.delete(item)
+        # Instanciar el servicio de búsqueda de productos
+        nombre_product = self.entry_buscar.get()
+        servicio = ServBusqProduc()
+        lista_productos = servicio.buscar_productos_por_nombre(nombre_product)
+        for producto in lista_productos:
+            self.tabla_productos.insert("", "end", values=(
+                producto.id_producto,
+                producto.nombre_producto,
+                producto.id_marca,
+                producto.stock_actual
+            ))
