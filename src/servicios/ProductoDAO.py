@@ -55,6 +55,49 @@ class ProductoDAO:
         finally:
             self.db.desconectar()
 
+    # Función para modificar un producto existente
+    def modificar_producto(self, producto):
+        conexion = self.db.conectar()
+        if not conexion:
+            return False
+
+        try:
+            cursor = conexion.cursor()
+            query = """
+                UPDATE PRODUCTO
+                SET nombre_producto = ?, id_categoria = ?, id_marca = ?, presentacion = ?, 
+                    unidad_medida = ?, contenido = ?, precio_compra = ?, precio_venta = ?, 
+                    stock_minimo = ?, stock_actual = ?, estatus = ?
+                WHERE id_producto = ?
+            """
+            cursor.execute(query, (
+                producto.nombre_producto,
+                producto.id_categoria,
+                producto.id_marca,
+                producto.presentacion,
+                producto.unidad_medida,
+                producto.contenido,
+                producto.precio_compra,
+                producto.precio_venta,
+                producto.stock_minimo,
+                producto.stock_actual,
+                producto.estatus,
+                producto.id_producto
+            ))
+            conexion.commit()
+            return True
+        except sqlite3.Error as e:
+            print(f"Error al modificar producto: {e}")
+            return False
+        finally:
+            self.db.desconectar()
+
+
+
+
+
+
+
 # --- EJEMPLO DE CÓMO USARLO AHORA ---
 if __name__ == "__main__":
     dao = ProductoDAO()
@@ -69,3 +112,7 @@ if __name__ == "__main__":
             print(f"ALERTA STOCK BAJO: {prod.nombre_producto}")
         else:
             print(prod) # Esto usa el método __str__ que creamos
+            
+    
+    
+    
