@@ -42,7 +42,6 @@ htmlcov/
 .tox/
 
 # --- Bases de Datos Locales ---
-base_de_datos/
 *.sqlite3
 db.sqlite3
 bodega.db
@@ -63,3 +62,8 @@ desktop.ini
 
 # --- Logs y Errores ---
 *.log
+
+# 1. Ignorar TODO lo que hay dentro de la carpeta
+base_de_datos/*
+
+!base_de_datos/.gitkeep
