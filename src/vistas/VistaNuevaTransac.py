@@ -81,13 +81,13 @@ class VistaNuevaTransac(ctk.CTkToplevel):
         self.cantidad_frame = ctk.CTkFrame(self.anadir_frame, fg_color="transparent")
         self.cantidad_frame.pack(side="right")
 
-        self.btn_restar = ctk.CTkButton(self.cantidad_frame, text="-", width=30)
+        self.btn_restar = ctk.CTkButton(self.cantidad_frame, text="-", width=30, command=self.reducir_cantidad)
         self.btn_restar.pack(side="left", padx=(0,5))
 
         self.label_cantidad = ctk.CTkLabel(self.cantidad_frame, text="1", width=30, anchor="center")
         self.label_cantidad.pack(side="left")
 
-        self.btn_sumar = ctk.CTkButton(self.cantidad_frame, text="+", width=30)
+        self.btn_sumar = ctk.CTkButton(self.cantidad_frame, text="+", width=30, command=self.incrementar_cantidad)
         self.btn_sumar.pack(side="left", padx=(5,0))
         # frame para manejar los detalles de la transacción
         self.detalles_frame = ctk.CTkFrame(self, fg_color="transparent")
@@ -135,3 +135,14 @@ class VistaNuevaTransac(ctk.CTkToplevel):
                 producto.id_marca,
                 producto.stock_actual
             ))
+    # creacion de un metodo para actualizar la cantidad en el label
+    def actualizar_cantidad(self, nueva_cantidad):
+        # devuelve el valor numerico del label cantidad
+        nueva_cantidad = max(1, nueva_cantidad)  # Asegura que la cantidad no sea menor a 1
+        self.label_cantidad.configure(text=str(nueva_cantidad))
+    def incrementar_cantidad(self):
+        cantidad_actual = int(self.label_cantidad.cget("text"))
+        self.actualizar_cantidad(cantidad_actual + 1)
+    def reducir_cantidad(self):
+        cantidad_actual = int(self.label_cantidad.cget("text"))
+        self.actualizar_cantidad(cantidad_actual - 1)
