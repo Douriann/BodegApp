@@ -44,6 +44,7 @@ htmlcov/
 # --- Bases de Datos Locales ---
 *.sqlite3
 db.sqlite3
+bodega.db
 
 # --- Variables de Entorno y Secretos (¡MUY IMPORTANTE!) ---
 # Nunca subas tus claves API o contraseñas
