@@ -95,7 +95,7 @@ class VistaTransac(ctk.CTkFrame):
         # Badge de Tipo
         badge = ctk.CTkFrame(fila, fg_color=color_badge, corner_radius=4, height=20)
         badge.place(relx=0.32, rely=0.5, anchor="center")
-        ctk.CTkLabel(badge, text=val_tipo, text_color="white", font=("Segoe UI", 9, "bold"), height=29).pack(padx=10)
+        ctk.CTkLabel(badge, text=val_tipo, text_color="white", font=("Segoe UI", 9, "bold"), height=30).pack(padx=10)
 
         # Total
         ctk.CTkLabel(fila, text=f"$ {float(transac.total):,.2f}", font=("Segoe UI", 12, "bold")).place(relx=0.52, rely=0.5, anchor="w")
