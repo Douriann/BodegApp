@@ -19,7 +19,7 @@ class ServBusqProduc:
 
         try:
             cursor = conexion.cursor()
-            query = """SELECT P.id_producto, P.nombre_producto, M.nombre_marca, P.stock_actual
+            query = """SELECT P.id_producto, P.nombre_producto, M.nombre_marca, P.precio_compra, P.precio_venta, P.stock_actual
             FROM PRODUCTO P
             JOIN MARCA M ON P.id_marca = M.id_marca"""
             cursor.execute(query)
@@ -34,10 +34,10 @@ class ServBusqProduc:
                     presentacion=None,
                     unidad_medida=None,
                     contenido=None,
-                    precio_compra=None,
-                    precio_venta=None,
+                    precio_compra=fila[3],
+                    precio_venta=fila[4],
                     stock_minimo=None,
-                    stock_actual=fila[3],
+                    stock_actual=fila[5],
                     estatus=None
                 )
 
@@ -64,7 +64,7 @@ class ServBusqProduc:
 
         try:
             cursor = conexion.cursor()
-            query = """SELECT P.id_producto, P.nombre_producto, M.nombre_marca, P.stock_actual
+            query = """SELECT P.id_producto, P.nombre_producto, M.nombre_marca, P.precio_compra, P.precio_venta, P.stock_actual
             FROM PRODUCTO P
             JOIN MARCA M ON P.id_marca = M.id_marca
             WHERE P.nombre_producto LIKE ?"""
@@ -80,10 +80,10 @@ class ServBusqProduc:
                     presentacion=None,
                     unidad_medida=None,
                     contenido=None,
-                    precio_compra=None,
-                    precio_venta=None,
+                    precio_compra=fila[3],
+                    precio_venta=fila[4],
                     stock_minimo=None,
-                    stock_actual=fila[3],
+                    stock_actual=fila[5],
                     estatus=None
                 )
 
