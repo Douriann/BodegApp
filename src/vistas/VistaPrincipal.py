@@ -104,7 +104,7 @@ class VistaPrincipal(ctk.CTk):
 
         # --- SECCIÓN DE APARIENCIA PERSONALIZADA ---
 
-        icono_tema= ctk.CTkImage(Image.open("recursos/icons-paleta-de-color.png"), size=(20, 20))
+        icono_tema= ctk.CTkImage(Image.open(rutas.obtener_ruta_imagen("icons-paleta-de-color.png")), size=(20, 20))
 
         self.appearance_mode_label = ctk.CTkLabel(
             self.sidebar_frame, 
