@@ -1,6 +1,10 @@
 from tkinter import messagebox
 import customtkinter as ctk
 from servicios.ServBusqProduc import ServBusqProduc
+from servicios.ServTransac import ServTransac
+from modelos.Transaccion import Transaccion
+from modelos.DetalleTransaccion import DetalleTransaccion
+from datetime import datetime
 
 class VistaNuevaTransac(ctk.CTkToplevel):
     def __init__(self, parent):
@@ -68,13 +72,14 @@ class VistaNuevaTransac(ctk.CTkToplevel):
         self.label_titulo.pack(pady=20)
 
         # Radio Buttons
+        self.val_tipo_transac = ctk.IntVar(value=0)
         self.label_tipo = ctk.CTkLabel(self.right_container, text="Tipo de Transacción:", font=("Segoe UI", 14, "bold"))
         self.label_tipo.pack(pady=(10, 5))
         self.radio_frame = ctk.CTkFrame(self.right_container, fg_color="transparent")
         self.radio_frame.pack(pady=5)
-        self.radiobtn_compra = ctk.CTkRadioButton(self.radio_frame, text="Compra", value=1, border_color="#ab3df4", hover_color="#c06ef7")
+        self.radiobtn_compra = ctk.CTkRadioButton(self.radio_frame, text="Compra", value=1, border_color="#ab3df4", hover_color="#c06ef7",variable=self.val_tipo_transac, command=self.calcular_totales)
         self.radiobtn_compra.pack(side="left", padx=40)
-        self.radiobtn_venta = ctk.CTkRadioButton(self.radio_frame, text="Venta", value=2, border_color="#ab3df4", hover_color="#c06ef7")
+        self.radiobtn_venta = ctk.CTkRadioButton(self.radio_frame, text="Venta", value=2, border_color="#ab3df4", hover_color="#c06ef7", variable=self.val_tipo_transac, command=self.calcular_totales)
         self.radiobtn_venta.pack(side="left", padx=0)
 
         self.entry_desc = ctk.CTkEntry(self.right_container, placeholder_text="Descripción", width=290)
@@ -136,7 +141,8 @@ class VistaNuevaTransac(ctk.CTkToplevel):
             hover_color="#26A46E", 
             font=("Segoe UI", 14, "bold"),
             height=40,
-            width=140 # Ancho fijo para que sean simétricos
+            width=140,
+            command=self.obtener_datos_transaccion # Ancho fijo para que sean simétricos,
         )
         self.btn_guardar.pack(side="right", expand=True, padx=(0, 5))
 
@@ -151,6 +157,18 @@ class VistaNuevaTransac(ctk.CTkToplevel):
             width=140
         )
         self.btn_cancelar.pack(side="left", expand=True, padx=(5, 0))
+        #  Labels para total en USD y  en bolivares
+        self.frame_totales = ctk.CTkFrame(self.right_container, fg_color="transparent")
+        self.frame_totales.pack(side="bottom", fill="x", pady=(0, 10), padx=20)
+        self.label_total_usd = ctk.CTkLabel(self.frame_totales, text="Total (USD): $0.00", font=("Segoe UI", 14, "bold"))
+        self.label_total_usd.pack(side="left", padx=5)
+        self.label_total_bs = ctk.CTkLabel(self.frame_totales, text="Total (BS): Bs 0.00", font=("Segoe UI", 14, "bold"))
+        self.label_total_bs.pack(side="right", padx=5)
+
+        # atributo para almacenar producto seleccionado
+        self.lista_productos_seleccionados = []
+        self.lista_cantidades = []
+        self.lista_subtotales = []
 
     def crear_fila_producto(self, producto):
         fila = ctk.CTkFrame(self.scroll_productos, fg_color="transparent", height=40, corner_radius=5)
@@ -214,16 +232,97 @@ class VistaNuevaTransac(ctk.CTkToplevel):
         self.actualizar_cantidad(int(self.label_cantidad.cget("text")) - 1)
 
     def actualizar_detalles_transaccion(self):
+        if self.validar_radio_buttons() is False:
+            return
         if hasattr(self, 'fila_data'):
             p = self.fila_data
+            self.lista_productos_seleccionados.append(p)
             cantidad = self.label_cantidad.cget("text")
             if int(cantidad) > int(p.stock_actual):
                 messagebox.showerror("Error", "Stock insuficiente.")
                 return
-            
+            self.lista_cantidades.append(int(cantidad))
             nuevo_texto = f"• {p.nombre_producto} (x{cantidad})"
             actual = self.label_detalles_info.cget("text")
             self.label_detalles_info.configure(text=f"{actual}\n{nuevo_texto}" if actual else nuevo_texto)
             self.label_cantidad.configure(text="1")
+            self.calcular_totales()
         else:
             messagebox.showwarning("Atención", "Seleccione un producto de la lista.")
+
+    def validar_radio_buttons(self):
+        tipo_seleccionado = self.val_tipo_transac.get()
+        if tipo_seleccionado != 1 and tipo_seleccionado != 2:
+            messagebox.showwarning("Atención", "Seleccione un tipo de transacción (Compra o Venta).")
+            return False
+        return True
+    
+    def obtener_datos_transaccion(self):
+        tipo_transaccion = self.val_tipo_transac.get()
+        descripcion = self.entry_desc.get()
+        detalles = []
+        if self.lista_productos_seleccionados:
+            for producto in self.lista_productos_seleccionados:
+                indice = self.lista_productos_seleccionados.index(producto)
+                detalle = DetalleTransaccion(
+                    id_detalle=None,
+                    id_transaccion=None,
+                    id_producto=producto.id_producto,
+                    cantidad_producto=self.lista_cantidades[indice],
+                    subtotal=self.lista_subtotales[indice],
+                    estatus=1 
+                )
+                detalles.append(detalle)
+            transaccion = Transaccion(
+                id_transaccion=None,
+                fecha_transaccion=datetime.now().strftime("%Y-%m-%d"),
+                id_tipo=tipo_transaccion,
+                total=sum(self.lista_subtotales),
+                observaciones=descripcion if descripcion else "Sin observaciones",
+                estatus=1
+            )
+            serv_transac = ServTransac()
+            serv_transac.agregar_transaccion(transaccion, detalles)
+            messagebox.showinfo("Éxito", "Transacción guardada correctamente.")
+            self.limpiar_formulario()
+            #for det in detalles:
+            #    print(f"Detalle - Producto ID: {det.id_producto}, Cantidad: {det.cantidad_producto}, Subtotal: {det.subtotal}")
+        else:
+            messagebox.showerror("Error", "No se ha realizado la transacción")
+            return
+    #metodo para mostrar el total en USD y en bolivares dependiendo de los productos y el radiobutton seleccionado
+    def calcular_totales(self):
+        total_usd = 0.0
+        if self.lista_productos_seleccionados:
+            self.lista_subtotales.clear()
+            for producto in self.lista_productos_seleccionados:
+                indice = self.lista_productos_seleccionados.index(producto)
+                cantidad = self.lista_cantidades[indice]
+                precio_select = self.obtener_precio_select(producto)
+                total_usd += precio_select * cantidad  # Ajustar según el precio real
+                self.lista_subtotales.append(precio_select * cantidad)
+            total_bs = total_usd * 5.0  # Suponiendo una tasa de cambio fija para el ejemplo
+            self.label_total_usd.configure(text=f"Total (USD): ${total_usd:.2f}")
+            self.label_total_bs.configure(text=f"Total (BS): Bs {total_bs:.2f}")
+            print(self.lista_subtotales)
+        else:
+            return
+        
+    def obtener_precio_select(self, producto):
+        if self.val_tipo_transac.get() == 1:  # Compra
+            return producto.precio_compra
+        elif self.val_tipo_transac.get() == 2:  # Venta
+            return producto.precio_venta
+        else:
+            return 0.0
+    
+    def limpiar_formulario(self):
+        self.val_tipo_transac.set(0)
+        self.entry_desc.delete(0, 'end')
+        self.label_cantidad.configure(text="1")
+        self.label_detalles_info.configure(text="")
+        self.lista_productos_seleccionados.clear()
+        self.lista_cantidades.clear()
+        self.lista_subtotales.clear()
+        self.label_total_usd.configure(text="Total (USD): $0.00")
+        self.label_total_bs.configure(text="Total (BS): Bs 0.00")
