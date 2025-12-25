@@ -5,6 +5,7 @@ from servicios.ServTransac import ServTransac
 from modelos.Transaccion import Transaccion
 from modelos.DetalleTransaccion import DetalleTransaccion
 from datetime import datetime
+from servicios.BCVdatos import BcvScraper
 
 class VistaNuevaTransac(ctk.CTkToplevel):
     def __init__(self, parent):
@@ -169,6 +170,7 @@ class VistaNuevaTransac(ctk.CTkToplevel):
         self.lista_productos_seleccionados = []
         self.lista_cantidades = []
         self.lista_subtotales = []
+        self.bcv = BcvScraper()
 
     def crear_fila_producto(self, producto):
         fila = ctk.CTkFrame(self.scroll_productos, fg_color="transparent", height=40, corner_radius=5)
@@ -301,7 +303,7 @@ class VistaNuevaTransac(ctk.CTkToplevel):
                 precio_select = self.obtener_precio_select(producto)
                 total_usd += precio_select * cantidad  # Ajustar según el precio real
                 self.lista_subtotales.append(precio_select * cantidad)
-            total_bs = total_usd * 5.0  # Suponiendo una tasa de cambio fija para el ejemplo
+            total_bs = total_usd * self.bcv.obtener_tasa_con_respaldo().get('tasa', 0)  # Suponiendo una tasa de cambio fija para el ejemplo
             self.label_total_usd.configure(text=f"Total (USD): ${total_usd:.2f}")
             self.label_total_bs.configure(text=f"Total (BS): Bs {total_bs:.2f}")
             print(self.lista_subtotales)
