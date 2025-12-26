@@ -79,6 +79,9 @@ class VistaTransac(ctk.CTkFrame):
 
         self.cargar_datos()
 
+        # Escuchar eventos de nuevas transacciones para refrescar la tabla
+        self.bind("<<TransaccionCreada>>", lambda e: self.cargar_datos())
+
     def crear_fila_transaccion(self, transac):
         # Cada fila es una "tarjeta" compacta (height=45)
         fila = ctk.CTkFrame(self.scroll_filas, fg_color=("white", "#333333"), height=45, corner_radius=6)

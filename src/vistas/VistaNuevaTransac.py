@@ -155,7 +155,8 @@ class VistaNuevaTransac(ctk.CTkToplevel):
             hover_color="#DB2B18",
             font=("Segoe UI", 14, "bold"),
             height=40,
-            width=140
+            width=140,
+            command=self.limpiar_formulario
         )
         self.btn_cancelar.pack(side="left", expand=True, padx=(5, 0))
         #  Labels para total en USD y  en bolivares
@@ -252,7 +253,7 @@ class VistaNuevaTransac(ctk.CTkToplevel):
             self.lista_productos_seleccionados.append(p)
             cantidad = self.label_cantidad.cget("text")
             if int(cantidad) > int(p.stock_actual):
-                messagebox.showerror("Error", "Stock insuficiente.")
+                messagebox.showerror("Error", "Stock insuficiente.", parent=self)
                 return
             self.lista_cantidades.append(int(cantidad))
             nuevo_texto = f"• {p.nombre_producto} (x{cantidad})"
@@ -261,12 +262,12 @@ class VistaNuevaTransac(ctk.CTkToplevel):
             self.label_cantidad.configure(text="1")
             self.calcular_totales()
         else:
-            messagebox.showwarning("Atención", "Seleccione un producto de la lista.")
+            messagebox.showwarning("Atención", "Seleccione un producto de la lista.", parent=self)
 
     def validar_radio_buttons(self):
         tipo_seleccionado = self.val_tipo_transac.get()
         if tipo_seleccionado != 1 and tipo_seleccionado != 2:
-            messagebox.showwarning("Atención", "Seleccione un tipo de transacción (Compra o Venta).")
+            messagebox.showwarning("Atención", "Seleccione un tipo de transacción (Compra o Venta).", parent=self)
             return False
         return True
     
@@ -296,12 +297,35 @@ class VistaNuevaTransac(ctk.CTkToplevel):
             )
             serv_transac = ServTransac()
             serv_transac.agregar_transaccion(transaccion, detalles)
-            messagebox.showinfo("Éxito", "Transacción guardada correctamente.")
             self.limpiar_formulario()
+            # Intentar refrescar directamente al padre y emitir un evento virtual como respaldo
+            try:
+                parent = getattr(self, 'master', None)
+                if parent is not None:
+                    # Llamada directa al método si existe (más confiable)
+                    if hasattr(parent, 'cargar_datos'):
+                        try:
+                            parent.cargar_datos()
+                        except Exception:
+                            pass
+                    # Emitir evento virtual para handlers registrados
+                    try:
+                        parent.event_generate("<<TransaccionCreada>>")
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+            # Mostrar mensaje sobre esta ventana antes de cerrarla
+            messagebox.showinfo("Éxito", "Transacción guardada correctamente.", parent=self)
+            # Cerrar la ventana de nueva transacción
+            try:
+                self.destroy()
+            except Exception:
+                pass
             #for det in detalles:
             #    print(f"Detalle - Producto ID: {det.id_producto}, Cantidad: {det.cantidad_producto}, Subtotal: {det.subtotal}")
         else:
-            messagebox.showerror("Error", "No se ha realizado la transacción")
+            messagebox.showerror("Error", "No se ha realizado la transacción", parent=self)
             return
     #metodo para mostrar el total en USD y en bolivares dependiendo de los productos y el radiobutton seleccionado
     def calcular_totales(self):
