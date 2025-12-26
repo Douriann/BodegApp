@@ -192,22 +192,18 @@ class VistaNuevaTransac(ctk.CTkToplevel):
             # 1. Verificamos que exista la variable Y que el widget siga vivo en la interfaz
             if self.producto_seleccionado and self.producto_seleccionado.winfo_exists():
                 try:
-                   self.producto_seleccionado.configure(fg_color="transparent")
+                    self.producto_seleccionado.configure(fg_color="transparent")
                 except Exception:
                     # Si falla por alguna razón de tiempo, simplemente ignoramos
                     pass
-            
+
             # 2. Actualizamos a la nueva fila seleccionada
             self.producto_seleccionado = fila
-            self.fila_data = producto 
-    
+            self.fila_data = producto
+
             # 3. Validamos que la nueva fila también exista antes de mostrarla
             if fila.winfo_exists():
-                fila.configure(fg_color="#444444")        
-
-                fila.bind("<Enter>", on_enter)
-                fila.bind("<Leave>", on_leave)
-                fila.bind("<Button-1>", on_click)
+                fila.configure(fg_color="#444444")
 
         # Datos en la tabla
         cols = [(f"#{producto.id_producto}", 0.1), (producto.nombre_producto, 0.6), 
@@ -217,6 +213,18 @@ class VistaNuevaTransac(ctk.CTkToplevel):
             l = ctk.CTkLabel(fila, text=txt, font=("Segoe UI", 14))
             l.place(relx=rx, rely=0.5, anchor="w")
             l.bind("<Button-1>", on_click) # Permitir clic en el texto también
+            # Hacer que el hover funcione también sobre los widgets hijos
+            l.bind("<Enter>", on_enter)
+            l.bind("<Leave>", on_leave)
+            try:
+                l.configure(cursor="hand2")
+            except Exception:
+                pass
+
+        # Bindear también al frame de fila para que los clics/hover en el espacio libre funcionen
+        fila.bind("<Enter>", on_enter)
+        fila.bind("<Leave>", on_leave)
+        fila.bind("<Button-1>", on_click)
 
     def mostrar_productos(self):
         for child in self.scroll_productos.winfo_children():
