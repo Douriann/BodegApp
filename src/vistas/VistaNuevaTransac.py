@@ -186,16 +186,27 @@ class VistaNuevaTransac(ctk.CTkToplevel):
             if self.producto_seleccionado != fila:
                 fila.configure(fg_color="transparent")
 
+        #Seleccion de fila en la tabla despues de buscarlo en la barra
         def on_click(e):
-            if self.producto_seleccionado:
-                self.producto_seleccionado.configure(fg_color="transparent")
+            # 1. Verificamos que exista la variable Y que el widget siga vivo en la interfaz
+            if self.producto_seleccionado and self.producto_seleccionado.winfo_exists():
+                try:
+                   self.producto_seleccionado.configure(fg_color="transparent")
+                except Exception:
+                    # Si falla por alguna razón de tiempo, simplemente ignoramos
+                    pass
+            
+            # 2. Actualizamos a la nueva fila seleccionada
             self.producto_seleccionado = fila
-            self.fila_data = producto  # Guardamos el objeto producto seleccionado
-            fila.configure(fg_color="#444444")
+            self.fila_data = producto 
+    
+            # 3. Validamos que la nueva fila también exista antes de mostrarla
+            if fila.winfo_exists():
+                fila.configure(fg_color="#444444")        
 
-        fila.bind("<Enter>", on_enter)
-        fila.bind("<Leave>", on_leave)
-        fila.bind("<Button-1>", on_click)
+                fila.bind("<Enter>", on_enter)
+                fila.bind("<Leave>", on_leave)
+                fila.bind("<Button-1>", on_click)
 
         # Datos en la tabla
         cols = [(f"#{producto.id_producto}", 0.1), (producto.nombre_producto, 0.6), 
