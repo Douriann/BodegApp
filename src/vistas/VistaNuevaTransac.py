@@ -16,7 +16,7 @@ class VistaNuevaTransac(ctk.CTkToplevel):
         self.producto_seleccionado = None  # Para guardar la fila elegida
 
         #Centrado la ventana en la pantalla
-        anchoVist = 1000
+        anchoVist = 1200
         altoVist = 650
         
         self.update_idletasks()
@@ -56,7 +56,8 @@ class VistaNuevaTransac(ctk.CTkToplevel):
         self.header_tabla.pack(fill="x")
         self.header_tabla.pack_propagate(False)
 
-        headers = [("ID", 0.1), ("NOMBRE", 0.6), ("MARCA", 0.4), ("STOCK", 0.2)]
+        # Columnas: ID | NOMBRE | MARCA | PRESENTACIÓN | STOCK | PrecioVen (USD/Bs) | PrecioCom (USD/Bs)
+        headers = [("ID", 0.04), ("NOMBRE", 0.15), ("MARCA", 0.35), ("PRESENT.", 0.47), ("Precio Venta", 0.60), ("Precio Compra", 0.74), ("STOCK", 0.90)]
         for text, relx in headers:
             ctk.CTkLabel(self.header_tabla, text=text, font=("Segoe UI", 13, "bold"), text_color="#ab3df4").place(relx=relx, rely=0.5, anchor="w")
 
@@ -128,6 +129,9 @@ class VistaNuevaTransac(ctk.CTkToplevel):
         )
         self.label_detalles_info.pack(pady=10, padx=15, fill="both", expand=True)
 
+        # Inicializar el scraper de tasas antes de cargar los productos (se usa en la visualización de precios)
+        self.bcv = BcvScraper()
+
         self.mostrar_productos()
 
         # --- CONTENEDOR DE BOTONES (Guardar y Cancelar juntos) ---
@@ -155,7 +159,8 @@ class VistaNuevaTransac(ctk.CTkToplevel):
             hover_color="#DB2B18",
             font=("Segoe UI", 14, "bold"),
             height=40,
-            width=140
+            width=140,
+            command=self.limpiar_formulario
         )
         self.btn_cancelar.pack(side="left", expand=True, padx=(5, 0))
         #  Labels para total en USD y  en bolivares
@@ -170,7 +175,6 @@ class VistaNuevaTransac(ctk.CTkToplevel):
         self.lista_productos_seleccionados = []
         self.lista_cantidades = []
         self.lista_subtotales = []
-        self.bcv = BcvScraper()
 
     def crear_fila_producto(self, producto):
         fila = ctk.CTkFrame(self.scroll_productos, fg_color="transparent", height=40, corner_radius=5)
@@ -186,25 +190,54 @@ class VistaNuevaTransac(ctk.CTkToplevel):
             if self.producto_seleccionado != fila:
                 fila.configure(fg_color="transparent")
 
+        #Seleccion de fila en la tabla despues de buscarlo en la barra
         def on_click(e):
-            if self.producto_seleccionado:
-                self.producto_seleccionado.configure(fg_color="transparent")
+            # 1. Verificamos que exista la variable y que el widget siga vivo en la interfaz
+            if self.producto_seleccionado and self.producto_seleccionado.winfo_exists():
+                try:
+                    self.producto_seleccionado.configure(fg_color="transparent")
+                except Exception:
+                    pass
+
+            # 2. Actualizamos a la nueva fila seleccionada
             self.producto_seleccionado = fila
-            self.fila_data = producto  # Guardamos el objeto producto seleccionado
-            fila.configure(fg_color="#444444")
+            self.fila_data = producto
 
-        fila.bind("<Enter>", on_enter)
-        fila.bind("<Leave>", on_leave)
-        fila.bind("<Button-1>", on_click)
+            # 3. Validamos que la nueva fila también exista antes de mostrarla
+            if fila.winfo_exists():
+                fila.configure(fg_color="#444444")
 
-        # Datos en la tabla
-        cols = [(f"#{producto.id_producto}", 0.1), (producto.nombre_producto, 0.6), 
-                (str(producto.id_marca), 0.4), (str(producto.stock_actual), 0.2)]
+        # Formateamos precios (USD / Bs) según la tasa actual
+        tasa_obj = getattr(self, 'bcv', None)
+        if tasa_obj is not None:
+            tasa = tasa_obj.obtener_tasa_con_respaldo().get('tasa', 0) or 0
+        else:
+            tasa = 0
+        precio_venta = getattr(producto, 'precio_venta', 0.0) or 0.0
+        precio_compra = getattr(producto, 'precio_compra', 0.0) or 0.0
+        precio_venta_fmt = f"${precio_venta:,.2f} / Bs {precio_venta * tasa:,.2f}"
+        precio_compra_fmt = f"${precio_compra:,.2f} / Bs {precio_compra * tasa:,.2f}"
+        presentacion = getattr(producto, 'contenido', None) or getattr(producto, 'presentacion', '') or ''
+
+        cols = [(f"#{producto.id_producto}", 0.025), (producto.nombre_producto, 0.10), 
+                (str(producto.id_marca), 0.30), (presentacion, 0.44), (precio_venta_fmt, 0.55), (precio_compra_fmt, 0.75), (str(producto.stock_actual), 0.95)]
         
         for txt, rx in cols:
             l = ctk.CTkLabel(fila, text=txt, font=("Segoe UI", 14))
             l.place(relx=rx, rely=0.5, anchor="w")
             l.bind("<Button-1>", on_click) # Permitir clic en el texto también
+            # Hacer que el hover funcione también sobre los widgets hijos
+            l.bind("<Enter>", on_enter)
+            l.bind("<Leave>", on_leave)
+            try:
+                l.configure(cursor="hand2")
+            except Exception:
+                pass
+
+        # Bindear también al frame de fila para que los clics/hover en el espacio libre funcionen
+        fila.bind("<Enter>", on_enter)
+        fila.bind("<Leave>", on_leave)
+        fila.bind("<Button-1>", on_click)
 
     def mostrar_productos(self):
         for child in self.scroll_productos.winfo_children():
@@ -241,7 +274,7 @@ class VistaNuevaTransac(ctk.CTkToplevel):
             self.lista_productos_seleccionados.append(p)
             cantidad = self.label_cantidad.cget("text")
             if int(cantidad) > int(p.stock_actual):
-                messagebox.showerror("Error", "Stock insuficiente.")
+                messagebox.showerror("Error", "Stock insuficiente.", parent=self)
                 return
             self.lista_cantidades.append(int(cantidad))
             nuevo_texto = f"• {p.nombre_producto} (x{cantidad})"
@@ -250,12 +283,12 @@ class VistaNuevaTransac(ctk.CTkToplevel):
             self.label_cantidad.configure(text="1")
             self.calcular_totales()
         else:
-            messagebox.showwarning("Atención", "Seleccione un producto de la lista.")
+            messagebox.showwarning("Atención", "Seleccione un producto de la lista.", parent=self)
 
     def validar_radio_buttons(self):
         tipo_seleccionado = self.val_tipo_transac.get()
         if tipo_seleccionado != 1 and tipo_seleccionado != 2:
-            messagebox.showwarning("Atención", "Seleccione un tipo de transacción (Compra o Venta).")
+            messagebox.showwarning("Atención", "Seleccione un tipo de transacción (Compra o Venta).", parent=self)
             return False
         return True
     
@@ -285,12 +318,35 @@ class VistaNuevaTransac(ctk.CTkToplevel):
             )
             serv_transac = ServTransac()
             serv_transac.agregar_transaccion(transaccion, detalles)
-            messagebox.showinfo("Éxito", "Transacción guardada correctamente.")
             self.limpiar_formulario()
+            # Intentar refrescar directamente al padre y emitir un evento virtual como respaldo
+            try:
+                parent = getattr(self, 'master', None)
+                if parent is not None:
+                    # Llamada directa al método si existe (más confiable)
+                    if hasattr(parent, 'cargar_datos'):
+                        try:
+                            parent.cargar_datos()
+                        except Exception:
+                            pass
+                    # Emitir evento virtual para handlers registrados
+                    try:
+                        parent.event_generate("<<TransaccionCreada>>")
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+            # Mostrar mensaje sobre esta ventana antes de cerrarla
+            messagebox.showinfo("Éxito", "Transacción guardada correctamente.", parent=self)
+            # Cerrar la ventana de nueva transacción
+            try:
+                self.destroy()
+            except Exception:
+                pass
             #for det in detalles:
             #    print(f"Detalle - Producto ID: {det.id_producto}, Cantidad: {det.cantidad_producto}, Subtotal: {det.subtotal}")
         else:
-            messagebox.showerror("Error", "No se ha realizado la transacción")
+            messagebox.showerror("Error", "No se ha realizado la transacción", parent=self)
             return
     #metodo para mostrar el total en USD y en bolivares dependiendo de los productos y el radiobutton seleccionado
     def calcular_totales(self):

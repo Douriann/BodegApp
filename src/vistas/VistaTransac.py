@@ -79,6 +79,9 @@ class VistaTransac(ctk.CTkFrame):
 
         self.cargar_datos()
 
+        # Escuchar eventos de nuevas transacciones para refrescar la tabla
+        self.bind("<<TransaccionCreada>>", lambda e: self.cargar_datos())
+
     def crear_fila_transaccion(self, transac):
         # Cada fila es una "tarjeta" compacta (height=45)
         fila = ctk.CTkFrame(self.scroll_filas, fg_color=("white", "#333333"), height=45, corner_radius=6)
@@ -129,6 +132,10 @@ class VistaTransac(ctk.CTkFrame):
             
             # Creamos la lista de productos (sin el \n interno para que el join lo controle mejor)
             items = [f"• {d.nombre_producto} (x{d.cantidad_producto})" for d in detalles]
+
+            # Agregar observaciones si existen
+            if transac.observaciones and transac.observaciones.strip():
+                items.append(f"\nObservaciones: {transac.observaciones.strip()}")
             
             # UNIMOS CON SALTO DE LÍNEA: Esto reemplaza al "|" y los pone uno abajo del otro
             detalles_text += "\n".join(items)

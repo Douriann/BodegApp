@@ -19,7 +19,7 @@ class ServTransac:
 
         try:
             cursor = conexion.cursor()
-            query = "SELECT * FROM TRANSACCION"
+            query = "SELECT * FROM TRANSACCION T ORDER BY T.fecha_transaccion DESC, T.id_transaccion DESC"
             cursor.execute(query)
             resultados = cursor.fetchall()
             
