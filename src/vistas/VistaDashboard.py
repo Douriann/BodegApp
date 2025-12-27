@@ -42,36 +42,39 @@ class VistaDashboard(ctk.CTkFrame):
         self.frame_grafico.pack(pady=20, padx=20, fill="both", expand=True)
         
         self.crear_grafico()
-
+        
     def crear_grafico(self):
-        # Obtenemos los 3 productos más vendidos desde el servicio
-        datos = self.servicio.obtener_top_vendidos()
-        
-        if not datos:
-            # Si no hay ventas, mostramos un mensaje en lugar del gráfico
-            ctk.CTkLabel(self.frame_grafico, text="No hay datos suficientes para el gráfico").pack()
-            return
+        # 1. Obtener datos (usando el Top 3 que ya tienes)
+        datos = self.servicio.obtener_top_vendidos()[:3]
+        if not datos: return
 
-        # Preparamos los nombres y las cantidades
-        nombres = [d[0] for d in datos]
-        cantidades = [d[1] for d in datos]
+        # 2. Preparar etiquetas y valores
+        # Usamos nombres cortos para que no se choquen entre sí
+        # Busca la línea de 'nombres =' y déjala así:
+        nombres = [str(d[0]) for d in datos] 
+        valores = [d[1] for d in datos]
 
-        # Configuramos el estilo del gráfico con Matplotlib
-        fig, ax = plt.subplots(figsize=(6, 4), dpi=100)
-        fig.patch.set_facecolor('#242424') # Color de fondo oscuro para que combine
-        ax.set_facecolor('#242424')
-        
-        # Dibujamos las barras
-        barras = ax.bar(nombres, cantidades, color='#9b59b6') # Color morado
-        ax.set_title("Top 3 Productos Más Vendidos", color="white", pad=20)
-        
-        # Estética de los ejes
-        ax.tick_params(axis='x', colors='white')
-        ax.tick_params(axis='y', colors='white')
-        for spine in ax.spines.values():
-            spine.set_visible(False)
+        # 3. Configurar la figura (Fondo oscuro para que resalte el morado)
+        self.fig, self.ax = plt.subplots(figsize=(5, 3.5), dpi=100)
+        self.fig.set_facecolor('#1a1a1a') 
+        self.ax.set_facecolor('#1a1a1a')
 
-        # Insertamos el gráfico en la interfaz de CustomTkinter
-        canvas = FigureCanvasTkAgg(fig, master=self.frame_grafico)
+        # 4. Dibujar las barras (EL SECRETO: width=0.2 para que sean delgadas)
+        # Color: #b066ff es el morado brillante...
+        barras = self.ax.bar(nombres, valores, color='#a674ff', width=0.2, align='center')
+
+        # 5. Estética de los ejes (Letras blancas y limpias)
+        self.ax.set_title("TOP 3 MÁS VENDIDOS", color='white', fontsize=18, fontweight='bold', pad=25)
+        self.ax.tick_params(colors='white', labelsize=12) # Esto pone en blanco los números del eje Y y nombres del eje X
+        self.fig.tight_layout() # Evita que los nombres largos se corten
+        
+        # Quitar los bordes del gráfico para un look moderno
+        for side in ['top', 'right', 'left', 'bottom']:
+         self.ax.spines[side].set_visible(False)
+
+        # 6. Mostrar el gráfico en el frame
+        self.ax.set_xlim(-0.5, 2.5) # Esto obliga al gráfico a dejar espacio para 3 barras siempre
+        from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+        canvas = FigureCanvasTkAgg(self.fig, master=self.frame_grafico)
         canvas.draw()
         canvas.get_tk_widget().pack(fill="both", expand=True)
