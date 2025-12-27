@@ -1,7 +1,6 @@
 import sqlite3
 from servicios.ConexionBD import ConexionBD
-# Asegúrate de importar tu nueva clase Producto. 
-# Si están en la misma carpeta: from Producto import Producto
+
 from modelos.Producto import Producto
 
 class ProductoDAO:
@@ -92,8 +91,131 @@ class ProductoDAO:
         finally:
             self.db.desconectar()
 
+    
+    def insertar_producto(self, producto):
+        conexion = self.db.conectar()
+        if not conexion:
+            return False
 
+        try:
+            cursor = conexion.cursor()
 
+            #Verificar duplicado por nombre,  marca y contenido de producto
+            cursor.execute("SELECT COUNT(*) FROM PRODUCTO WHERE nombre_producto = ? AND id_marca = ? AND contenido = ?", (producto.nombre_producto, producto.id_marca, producto.contenido))
+            if cursor.fetchone()[0] > 0:
+                print("Error: Ya existe el producto")
+                return False
+
+            # Insertar el nuevo producto
+            query = """ INSERT INTO PRODUCTO (nombre_producto, id_categoria, id_marca, presentacion,
+                unidad_medida, contenido, precio_compra, precio_venta,
+                stock_minimo, stock_actual, estatus)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?)
+            """
+            cursor.execute(query, (
+                producto.nombre_producto,
+                producto.id_categoria,
+                producto.id_marca,
+                producto.presentacion,
+                producto.unidad_medida,
+                producto.contenido,
+                producto.precio_compra,
+                producto.precio_venta,
+                producto.stock_minimo,
+                producto.stock_actual,
+                producto.estatus ))
+            conexion.commit()
+            return True
+        except sqlite3.Error as e:
+            print(f"Error al insertar producto: {e}")
+            return False
+        finally:
+            self.db.desconectar()
+
+    def obtener_categorias(self):
+        """
+        Retorna una lista de tuplas (id_categoria, descripcion_categoria) para poblar el combo.
+        """
+        conexion = self.db.conectar()
+        if not conexion:
+            return []
+
+        try:
+            cursor = conexion.cursor()
+            cursor.execute("SELECT id_categoria, descripcion_categoria FROM CATEGORIA")
+            return cursor.fetchall()
+        except sqlite3.Error as e:
+            print(f"Error al obtener categorías: {e}")
+            return []
+        finally:
+            self.db.desconectar()
+
+    def obtener_marcas(self):
+        """
+        Retorna una lista de tuplas (id_marca, nombre_marca) para poblar el combo.
+        """
+        conexion = self.db.conectar()
+        if not conexion:
+            return []
+
+        try:
+            cursor = conexion.cursor()
+            cursor.execute("SELECT id_marca, nombre_marca FROM MARCA")
+            return cursor.fetchall()
+        except sqlite3.Error as e:
+            print(f"Error al obtener marcas: {e}")
+            return []
+        finally:
+            self.db.desconectar()
+
+    def buscar_por_nombre(self, nombre_producto):
+        """
+        Retorna una lista de OBJETOS de tipo Producto que coinciden con el nombre dado (búsqueda parcial).
+        """
+        conexion = self.db.conectar()
+        
+        if not conexion:
+            return []
+
+        lista_objetos_producto = []
+
+        try:
+            cursor = conexion.cursor()
+            query = """
+                SELECT P.id_producto, P.nombre_producto, P.id_categoria, P.id_marca, 
+                       P.presentacion, P.unidad_medida, P.contenido, P.precio_compra, 
+                       P.precio_venta, P.stock_minimo, P.stock_actual, P.estatus
+                FROM PRODUCTO P
+                WHERE P.nombre_producto LIKE ? AND P.estatus = 1  
+            """
+            cursor.execute(query, ('%' + nombre_producto + '%',))
+            resultados = cursor.fetchall()
+            
+            for fila in resultados:
+                producto_obj = Producto(
+                    id_producto=fila[0],
+                    nombre_producto=fila[1],
+                    id_categoria=fila[2],
+                    id_marca=fila[3],
+                    presentacion=fila[4],
+                    unidad_medida=fila[5],
+                    contenido=fila[6],
+                    precio_compra=fila[7],
+                    precio_venta=fila[8],
+                    stock_minimo=fila[9],
+                    stock_actual=fila[10],
+                    estatus=fila[11]
+                )
+                lista_objetos_producto.append(producto_obj)
+
+            return lista_objetos_producto
+
+        except sqlite3.Error as e:
+            print(f"Error al buscar por nombre: {e}")
+            return []
+        finally:
+            self.db.desconectar()
+        
 
 
 
