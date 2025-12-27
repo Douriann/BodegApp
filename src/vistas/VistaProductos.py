@@ -8,7 +8,7 @@ from modelos.Producto import Producto
 
 # Importar la vista de modificación de producto
 from vistas.VistaModifProducto import VistaModifProducto
-from vistas.VistaCrearProduto import VistaCrearProduto
+from vistas.VistaCrearProducto import VistaCrearProducto
 
 
 
@@ -156,7 +156,7 @@ class VistaProductos(ctk.CTkFrame):
    
     # Metodo para crear producto
     def crear_producto(self):
-        VistaCrearProduto(self, self.cargar_datos)
+        VistaCrearProducto(self, self.cargar_datos)
 
     # NUEVO: Método para buscar productos
     def buscar_productos(self):
