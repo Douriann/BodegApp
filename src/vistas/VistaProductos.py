@@ -2,10 +2,13 @@ import customtkinter as ctk
 from tkinter import ttk # Necesario para el Treeview
 import tkinter as tk
 
-# Asegúrate de importar tu DAO
-# (Ajusta la ruta si 'consultas' está en otro lado)
+# Importar el DAO y el modelo Producto
 from servicios.ProductoDAO import ProductoDAO
 from modelos.Producto import Producto
+
+# Importar la vista de modificación de producto
+from vistas.VistaModifProducto import VistaModifProducto
+
 
 
 class VistaProductos(ctk.CTkFrame):
@@ -286,100 +289,9 @@ class VistaProductos(ctk.CTkFrame):
     
     #-- Función para abrir formulario de edición ---
     def abrir_formulario_edicion(self, producto):
-        ventana = ctk.CTkToplevel(self)
-        ventana.title("Editar Producto")
-        ventana.geometry("420x550")
+        VistaModifProducto(self, producto, self.cargar_datos)
 
-        scroll_frame = ctk.CTkScrollableFrame(ventana, width=380, height=400)
-        scroll_frame.pack(pady=10, padx=10, fill="both", expand=True)
-
-        campos = {}
-
-        def crear_campo(nombre, valor_inicial):
-            label = ctk.CTkLabel(scroll_frame, text=nombre)
-            label.pack(pady=(10, 0))
-            entry = ctk.CTkEntry(scroll_frame, width=300)
-            entry.insert(0, str(valor_inicial))
-            entry.pack(pady=(0, 10)) # agrega separación entre campos
-            campos[nombre] = entry
-
-
-        crear_campo("Nombre", producto.nombre_producto)
-        crear_campo("ID Categoría", producto.id_categoria)
-        crear_campo("ID Marca", producto.id_marca)
-        crear_campo("Presentación", producto.presentacion)
-        crear_campo("Unidad de Medida", producto.unidad_medida)
-        crear_campo("Contenido", producto.contenido)
-        crear_campo("Precio Compra", producto.precio_compra)
-        crear_campo("Precio Venta", producto.precio_venta)
-        crear_campo("Stock Mínimo", producto.stock_minimo)
-        crear_campo("Stock Actual", producto.stock_actual)
-        
-        #-- Función para guardar cambios ---
-        def guardar():
-            try:
-                nombre = campos["Nombre"].get().strip()
-                if not nombre:
-                    raise ValueError("El nombre del producto no puede estar vacío.")
-
-                presentacion = campos["Presentación"].get().strip()
-                unidad = campos["Unidad de Medida"].get().strip()
-                if not presentacion or not unidad:
-                    raise ValueError("Presentación y unidad de medida son obligatorios.")
-
-                id_categoria = int(campos["ID Categoría"].get())
-                id_marca = int(campos["ID Marca"].get())
-                contenido = float(campos["Contenido"].get())
-                precio_compra = float(campos["Precio Compra"].get())
-                precio_venta = float(campos["Precio Venta"].get())
-                stock_minimo = int(campos["Stock Mínimo"].get())
-                stock_actual = int(campos["Stock Actual"].get())
-
-                if precio_compra < 0 or precio_venta < 0:
-                    raise ValueError("Los precios no pueden ser negativos.")
-                if stock_minimo < 0 or stock_actual < 0:
-                    raise ValueError("El stock no puede ser negativo.")
-                if contenido <= 0:
-                    raise ValueError("El contenido debe ser mayor que cero.")
-
-                # Asignar valores al objeto
-                producto.nombre_producto = nombre
-                producto.id_categoria = id_categoria
-                producto.id_marca = id_marca
-                producto.presentacion = presentacion
-                producto.unidad_medida = unidad
-                producto.contenido = contenido
-                producto.precio_compra = precio_compra
-                producto.precio_venta = precio_venta
-                producto.stock_minimo = stock_minimo
-                producto.stock_actual = stock_actual
-
-                dao = ProductoDAO()
-                if dao.modificar_producto(producto):
-                    self.cargar_datos()
-                    tk.messagebox.showinfo("Éxito", "El producto fue modificado correctamente.")
-                    ventana.destroy()
-                else:
-                    tk.messagebox.showerror("Error", "No se pudo modificar el producto.")
-
-            except ValueError as ve:
-                tk.messagebox.showerror("Error de validación", str(ve))
-            except Exception as e:
-                tk.messagebox.showerror("Error inesperado", f"Ocurrió un error: {e}")
-                
-
-        #Alineado de botones
-        frame_botones = ctk.CTkFrame(ventana)
-        frame_botones.pack(pady=10)
-
-        # Botón para guardar cambios
-        btn_guardar = ctk.CTkButton(frame_botones, text="Guardar Cambios", command=guardar) 
-        btn_guardar.pack(side="left", padx=10)
-
-        # Botón para cancelar
-        btn_cancelar = ctk.CTkButton(frame_botones, text="Cancelar", command=ventana.destroy) 
-        btn_cancelar.pack(side="left", padx=10)
-
+   
     # Metodo para crear producto
     def crear_producto(self):
         """

@@ -132,6 +132,10 @@ class VistaTransac(ctk.CTkFrame):
             
             # Creamos la lista de productos (sin el \n interno para que el join lo controle mejor)
             items = [f"• {d.nombre_producto} (x{d.cantidad_producto})" for d in detalles]
+
+            # Agregar observaciones si existen
+            if transac.observaciones and transac.observaciones.strip():
+                items.append(f"\nObservaciones: {transac.observaciones.strip()}")
             
             # UNIMOS CON SALTO DE LÍNEA: Esto reemplaza al "|" y los pone uno abajo del otro
             detalles_text += "\n".join(items)

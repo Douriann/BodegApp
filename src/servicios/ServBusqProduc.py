@@ -19,7 +19,7 @@ class ServBusqProduc:
 
         try:
             cursor = conexion.cursor()
-            query = """SELECT P.id_producto, P.nombre_producto, M.nombre_marca, P.precio_compra, P.precio_venta, P.stock_actual
+            query = """SELECT P.id_producto, P.nombre_producto, M.nombre_marca, P.precio_compra, P.precio_venta, P.stock_actual, P.presentacion
             FROM PRODUCTO P
             JOIN MARCA M ON P.id_marca = M.id_marca"""
             cursor.execute(query)
@@ -31,7 +31,7 @@ class ServBusqProduc:
                     nombre_producto=fila[1],
                     id_categoria=None,
                     id_marca=fila[2],
-                    presentacion=None,
+                    presentacion=fila[6],
                     unidad_medida=None,
                     contenido=None,
                     precio_compra=fila[3],

@@ -16,7 +16,7 @@ class VistaNuevaTransac(ctk.CTkToplevel):
         self.producto_seleccionado = None  # Para guardar la fila elegida
 
         #Centrado la ventana en la pantalla
-        anchoVist = 1000
+        anchoVist = 1200
         altoVist = 650
         
         self.update_idletasks()
@@ -56,7 +56,8 @@ class VistaNuevaTransac(ctk.CTkToplevel):
         self.header_tabla.pack(fill="x")
         self.header_tabla.pack_propagate(False)
 
-        headers = [("ID", 0.1), ("NOMBRE", 0.6), ("MARCA", 0.4), ("STOCK", 0.2)]
+        # Columnas: ID | NOMBRE | MARCA | PRESENTACIÓN | STOCK | PrecioVen (USD/Bs) | PrecioCom (USD/Bs)
+        headers = [("ID", 0.04), ("NOMBRE", 0.15), ("MARCA", 0.35), ("PRESENT.", 0.47), ("Precio Venta", 0.60), ("Precio Compra", 0.74), ("STOCK", 0.90)]
         for text, relx in headers:
             ctk.CTkLabel(self.header_tabla, text=text, font=("Segoe UI", 13, "bold"), text_color="#ab3df4").place(relx=relx, rely=0.5, anchor="w")
 
@@ -128,6 +129,9 @@ class VistaNuevaTransac(ctk.CTkToplevel):
         )
         self.label_detalles_info.pack(pady=10, padx=15, fill="both", expand=True)
 
+        # Inicializar el scraper de tasas antes de cargar los productos (se usa en la visualización de precios)
+        self.bcv = BcvScraper()
+
         self.mostrar_productos()
 
         # --- CONTENEDOR DE BOTONES (Guardar y Cancelar juntos) ---
@@ -171,7 +175,6 @@ class VistaNuevaTransac(ctk.CTkToplevel):
         self.lista_productos_seleccionados = []
         self.lista_cantidades = []
         self.lista_subtotales = []
-        self.bcv = BcvScraper()
 
     def crear_fila_producto(self, producto):
         fila = ctk.CTkFrame(self.scroll_productos, fg_color="transparent", height=40, corner_radius=5)
@@ -189,12 +192,11 @@ class VistaNuevaTransac(ctk.CTkToplevel):
 
         #Seleccion de fila en la tabla despues de buscarlo en la barra
         def on_click(e):
-            # 1. Verificamos que exista la variable Y que el widget siga vivo en la interfaz
+            # 1. Verificamos que exista la variable y que el widget siga vivo en la interfaz
             if self.producto_seleccionado and self.producto_seleccionado.winfo_exists():
                 try:
                     self.producto_seleccionado.configure(fg_color="transparent")
                 except Exception:
-                    # Si falla por alguna razón de tiempo, simplemente ignoramos
                     pass
 
             # 2. Actualizamos a la nueva fila seleccionada
@@ -205,9 +207,20 @@ class VistaNuevaTransac(ctk.CTkToplevel):
             if fila.winfo_exists():
                 fila.configure(fg_color="#444444")
 
-        # Datos en la tabla
-        cols = [(f"#{producto.id_producto}", 0.1), (producto.nombre_producto, 0.6), 
-                (str(producto.id_marca), 0.4), (str(producto.stock_actual), 0.2)]
+        # Formateamos precios (USD / Bs) según la tasa actual
+        tasa_obj = getattr(self, 'bcv', None)
+        if tasa_obj is not None:
+            tasa = tasa_obj.obtener_tasa_con_respaldo().get('tasa', 0) or 0
+        else:
+            tasa = 0
+        precio_venta = getattr(producto, 'precio_venta', 0.0) or 0.0
+        precio_compra = getattr(producto, 'precio_compra', 0.0) or 0.0
+        precio_venta_fmt = f"${precio_venta:,.2f} / Bs {precio_venta * tasa:,.2f}"
+        precio_compra_fmt = f"${precio_compra:,.2f} / Bs {precio_compra * tasa:,.2f}"
+        presentacion = getattr(producto, 'contenido', None) or getattr(producto, 'presentacion', '') or ''
+
+        cols = [(f"#{producto.id_producto}", 0.025), (producto.nombre_producto, 0.10), 
+                (str(producto.id_marca), 0.30), (presentacion, 0.44), (precio_venta_fmt, 0.55), (precio_compra_fmt, 0.75), (str(producto.stock_actual), 0.95)]
         
         for txt, rx in cols:
             l = ctk.CTkLabel(fila, text=txt, font=("Segoe UI", 14))
