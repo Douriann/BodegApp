@@ -51,7 +51,7 @@ class VistaModifProducto(ctk.CTkToplevel):
             self.header_frame, 
             text="DETALLES DEL PRODUCTO", 
             font=("Segoe UI", 20, "bold"),
-            text_color=("#9B3D95", "#ab3df4") 
+            text_color=("#ab3df4", "#ab3df4") 
         )
         self.lbl_titulo.pack(side="left")
 
@@ -59,7 +59,7 @@ class VistaModifProducto(ctk.CTkToplevel):
         self.scroll_body = ctk.CTkScrollableFrame(
             self.bg_frame, 
             fg_color=("white", "#1a1a1a"), 
-            scrollbar_button_color=("#9B3D95", "#ab3df4"),
+            scrollbar_button_color=("#ab3df4", "#ab3df4"),
             corner_radius=15
         )
         self.scroll_body.pack(fill="both", expand=True, padx=20, pady=10)
@@ -72,11 +72,13 @@ class VistaModifProducto(ctk.CTkToplevel):
         self._crear_entrada("Presentación", self.producto.presentacion, master=fila_datos)
         self._crear_entrada("Unidad de Medida", self.producto.unidad_medida, master=fila_datos)
         self._crear_entrada("Contenido", self.producto.contenido, full_width=True)
-
+        
+        #Combobox de Categoria
         self._seccion_titulo("Clasificación")
         cat_actual = next((f"{id} - {n}" for id, n in self.categorias if id == self.producto.id_categoria), "Seleccionar")
         self._crear_combo("Categoría", self.categorias, cat_actual)
         
+        #Combobox de Marca
         mar_actual = next((f"{id} - {n}" for id, n in self.marcas if id == self.producto.id_marca), "Seleccionar")
         self._crear_combo("Marca", self.marcas, mar_actual)
 
@@ -98,7 +100,7 @@ class VistaModifProducto(ctk.CTkToplevel):
             fg_color=("#E74C3C", "#E74C3C"), 
             hover_color=("#E1311D", "#E1311D"),
             width=210, height=40,
-            font=("Segoe UI", 13, "bold"), 
+            font=("Segoe UI", 14, "bold"), 
             command=self.destroy
         )
         self.btn_cancelar.pack(side="left")
@@ -108,7 +110,7 @@ class VistaModifProducto(ctk.CTkToplevel):
             fg_color=("#2CC985", "#26A46E"), 
             hover_color=("#26A46E", "#1D8356"),
             width=210, height=40, 
-            font=("Segoe UI", 13, "bold"),
+            font=("Segoe UI", 14, "bold"),
             command=self._guardar
         )
         self.btn_guardar.pack(side="right")
@@ -144,10 +146,19 @@ class VistaModifProducto(ctk.CTkToplevel):
         lbl.pack(anchor="w", padx=5)
         
         combo = ctk.CTkComboBox(
-            container, height=40, 
+            container, 
+            height=40, 
             values=[f"{id} - {n}" for id, n in opciones],
             state="readonly",
-            button_color=("#9B3D95", "#ab3df4")
+            # Usando un morado un poco más oscuro para forzar la flecha blanca
+            button_color="#8f10e5", 
+            button_hover_color="#ab3df4",
+            border_color="#8f10e5",
+            dropdown_fg_color="#ffffff",
+            dropdown_hover_color="#ab3df4",
+            # Definir el color del texto principal también
+            text_color=("#333333", "white"),
+            dropdown_text_color="black" 
         )
         combo.set(seleccion)
         combo.pack(fill="x", padx=5, pady=2)
