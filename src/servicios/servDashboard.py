@@ -22,10 +22,11 @@ class ServDashboard:
         if conexion:
             cursor = conexion.cursor()
             query = """
-                 SELECT id_tipo, COUNT(*) as total 
-                 FROM TRANSACCION 
-                 GROUP BY id_tipo
-                 ORDER BY total DESC 
+                 SELECT p.nombre_producto, SUM(dt.cantidad_producto) as total 
+                 FROM detalle_transaccion dt
+                 JOIN producto p ON dt.id_producto = p.id_producto
+                 GROUP BY p.nombre_producto
+                 ORDER BY total DESC
                  LIMIT 3
               """
             cursor.execute(query)

@@ -2,6 +2,7 @@ import customtkinter as ctk
 from servicios.servDashboard import ServDashboard # Tu "cerebro" de datos
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.ticker import MaxNLocator
 
 class VistaDashboard(ctk.CTkFrame):
     def __init__(self, parent, controller, **kwargs):
@@ -47,26 +48,35 @@ class VistaDashboard(ctk.CTkFrame):
         # 1. Obtener datos (usando el Top 3 que ya tienes)
         datos = self.servicio.obtener_top_vendidos()[:3]
         if not datos: return
+        # Limpiar el frame antes de crear el nuevo gráfico
+        for widget in self.frame_grafico.winfo_children():
+            widget.destroy()
 
         # 2. Preparar etiquetas y valores
         # Usamos nombres cortos para que no se choquen entre sí
         # Busca la línea de 'nombres =' y déjala así:
-        nombres = [str(d[0]) for d in datos] 
+        nombres = [str(d[0]) for d in datos]  
         valores = [d[1] for d in datos]
 
         # 3. Configurar la figura (Fondo oscuro para que resalte el morado)
         self.fig, self.ax = plt.subplots(figsize=(5, 3.5), dpi=100)
         self.fig.set_facecolor('#1a1a1a') 
         self.ax.set_facecolor('#1a1a1a')
+        # Forzar nombres reales y números enteros en Y
+        self.ax.set_xticks(range(len(nombres)))
+        self.ax.set_xticklabels(nombres)
+        self.ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+        self.ax.set_ylim(bottom=0)
 
         # 4. Dibujar las barras (EL SECRETO: width=0.2 para que sean delgadas)
         # Color: #b066ff es el morado brillante...
-        barras = self.ax.bar(nombres, valores, color='#a674ff', width=0.2, align='center')
+        barras = self.ax.bar(range(len(nombres)), valores, color='#a674ff', width=0.2, align='center')
 
         # 5. Estética de los ejes (Letras blancas y limpias)
-        self.ax.set_title("TOP 3 MÁS VENDIDOS", color='white', fontsize=18, fontweight='bold', pad=25)
-        self.ax.tick_params(colors='white', labelsize=12) # Esto pone en blanco los números del eje Y y nombres del eje X
-        self.fig.tight_layout() # Evita que los nombres largos se corten
+        self.ax.set_title("TOP 3 MÁS VENDIDOS", color='white', fontsize=18, fontweight='bold', pad=25) 
+        self.ax.tick_params(axis='both', colors='white', labelsize=12) # Esto aclara los números del eje Y
+       # Evita que los nombres largos se corten
+        self.fig.tight_layout() 
         
         # Quitar los bordes del gráfico para un look moderno
         for side in ['top', 'right', 'left', 'bottom']:
