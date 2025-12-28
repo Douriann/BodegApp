@@ -7,7 +7,7 @@ from matplotlib.ticker import MaxNLocator
 class VistaDashboard(ctk.CTkFrame):
     def __init__(self, parent, controller, **kwargs):
         super().__init__(parent, **kwargs)
-        self.controller = controller # Guardamos el controlador por si se necesitas
+        self.controller = controller # Guardamos el controlador por si se necesita
         self.servicio = ServDashboard()
         
         # --- CONFIGURACIÓN DE COLORES ---
@@ -75,8 +75,7 @@ class VistaDashboard(ctk.CTkFrame):
 
         # 5. Estética de los ejes (Letras blancas y limpias)
         self.ax.set_title("TOP 3 MÁS VENDIDOS", color='white', fontsize=18, fontweight='bold', pad=25) 
-        self.ax.tick_params(axis='both', colors='white', labelsize=12) # Esto aclara los números del eje Y
-       # Evita que los nombres largos se corten
+        self.ax.tick_params(axis='both', colors='white', labelsize=12) 
         self.fig.tight_layout() 
         
         # Quitar los bordes del gráfico para un look moderno
