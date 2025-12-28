@@ -18,11 +18,11 @@ class VistaDashboard(ctk.CTkFrame):
         self.lbl_titulo.pack(pady=(20, 10))
 
         # 2. FRAME DE INDICADORES (Ventas, Ingresos, Dólar)
-        # Este es el contenedor horizontal que te pidió el grupo
+        # Este es el contenedor horizontal solicitado
         self.frame_indicadores = ctk.CTkFrame(self, fg_color="#2b2b2b", corner_radius=15)
         self.frame_indicadores.pack(pady=10, padx=20, fill="x")
 
-        # Buscamos los datos reales de tus 6 registros
+        # Buscamos los datos reales de los 6 registros
         ventas_totales, ingresos = self.servicio.obtener_resumen_financiero()
         tasa_bcv = self.servicio.obtener_precio_dolar()
 
@@ -53,10 +53,9 @@ class VistaDashboard(ctk.CTkFrame):
             widget.destroy()
 
         # 2. Preparar etiquetas y valores
-        # Usamos nombres cortos para que no se choquen entre sí
-        # Busca la línea de 'nombres =' y déjala así:
         nombres = [str(d[0]) for d in datos]  
         valores = [d[1] for d in datos]
+        cantidades = [d[1] for d in datos]
 
         # 3. Configurar la figura (Fondo oscuro para que resalte el morado)
         self.fig, self.ax = plt.subplots(figsize=(5, 3.5), dpi=100)
@@ -67,6 +66,8 @@ class VistaDashboard(ctk.CTkFrame):
         self.ax.set_xticklabels(nombres)
         self.ax.yaxis.set_major_locator(MaxNLocator(integer=True))
         self.ax.set_ylim(bottom=0)
+        max_venda = max(cantidades) if cantidades else 1
+        self.ax.set_ylim(top=max_venda + 1) 
 
         # 4. Dibujar las barras (EL SECRETO: width=0.2 para que sean delgadas)
         # Color: #b066ff es el morado brillante...
