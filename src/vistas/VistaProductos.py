@@ -8,6 +8,7 @@ from modelos.Producto import Producto
 
 # Importar la vista de modificación de producto
 from vistas.VistaModifProducto import VistaModifProducto
+from vistas.VistaCrearProducto import VistaCrearProducto
 
 
 
@@ -103,146 +104,7 @@ class VistaProductos(ctk.CTkFrame):
         # --- 6. Cargar datos al iniciar ---
         self.cargar_datos()
         
-    # Método auxiliar para abrir una ventana emergente genérica con formulario
-    def abrir_ventana_formulario(self, titulo, campos_config, combos_config, accion_guardar, ancho=420, alto=600):
-        """
-        Abre una ventana emergente con formulario reutilizable.
-        - titulo: Título de la ventana.
-        - campos_config: Lista de tuplas para campos de texto (ej. [("Nombre Producto", "Ej: Coca Cola")]).
-        - combos_config: Lista de tuplas para combos (ej. [("Categoría", categorias, "Selecciona Categoría")]).
-        - accion_guardar: Función callback para guardar (recibe campos y combos).
-        - ancho/alto: Dimensiones de la ventana.
-        """
-
-        # 1- Creacion de ventana y frame con sroll para formulario emergente
-        ventana = ctk.CTkToplevel(self)
-        ventana.title(titulo)
-        ventana.geometry(f"{ancho}x{alto}")
-
-        scroll_frame = ctk.CTkScrollableFrame(ventana, width=380, height=500)
-        scroll_frame.pack(pady=10, padx=10, fill="both", expand=True)
-
-        # 2- Diccionarios para guardar entradas de usuario
-
-        campos = {}
-        combos = {}
-        
-        # 3- Crear campos de texto
-        for nombre, placeholder in campos_config:
-            self.crear_campo_texto(scroll_frame, nombre, placeholder, campos)
-
-        # 4- Crear combos
-        for nombre, opciones, placeholder in combos_config:
-            self.crear_combo(scroll_frame, nombre, opciones, placeholder, combos)
-
-        # 5- Frame para botones guardar y cancelar
-        frame_botones = ctk.CTkFrame(ventana)
-        frame_botones.pack(pady=10)
-
-        btn_guardar = ctk.CTkButton(frame_botones, text="Guardar", command=lambda: self.manejar_guardar(ventana, campos, combos, accion_guardar)) 
-        btn_guardar.pack(side="left", padx=10)
-
-        btn_cancelar= ctk.CTkButton(frame_botones, text="Cancelar", command=ventana.destroy)
-        btn_cancelar.pack(side="left", padx=10)
-
-    # Metodo auxiliar para crear un campo de texto
-    def crear_campo_texto(self, parent, nombre, placeholder, campos_dict):
-        label = ctk.CTkLabel(parent, text=nombre)
-        label.pack(pady=(10, 0))
-        entry = ctk.CTkEntry(parent, width=300, placeholder_text=placeholder)
-        entry.pack(pady=(0, 10))
-        campos_dict[nombre] = entry
-
-     # Método auxiliar para crear un combo
-    def crear_combo(self, parent, nombre, opciones, placeholder, combos_dict):
-        label = ctk.CTkLabel(parent, text=nombre)
-        label.pack(pady=(10, 0))
-        combo = ctk.CTkComboBox(parent, width=300, values=[f"{id} - {nombre}" for id, nombre in opciones], state="readonly")
-        combo.set(placeholder)
-        combo.pack(pady=(0, 10))
-        combos_dict[nombre] = combo
-
-    # Método auxiliar para validar y obtener valores de campos
-    def validar_y_obtener_valores(self, campos, combos):
-        """
-        Valida campos comunes y retorna un diccionario con valores.
-        Lanza ValueError si hay errores.
-        """
-        # 1- Desempaquetar diccionario en variables
-        # Campos de texto
-        nombre = campos["Nombre Producto"].get().strip().title()
-        presentacion = campos["Presentación"].get().strip()
-        unidad_medida = campos["Unidad de Medida"].get().strip()
-        contenido = float(campos["Contenido"].get())
-        precio_compra = float(campos["Precio Compra"].get())
-        precio_venta = float(campos["Precio Venta"].get())
-        stock_minimo = int(campos["Stock Mínimo"].get())
-        stock_actual = int(campos["Stock Actual"].get())
-        # Combos
-        categoria_seleccionada = combos["Categoría"].get()
-        marca_seleccionada = combos["Marca"].get()
-
-        # 2- Validar entradas
-        if not nombre or nombre.isdigit():
-            raise ValueError("El nombre del producto no puede estar vacío ni ser solo números.")
-
-        
-        if not presentacion or presentacion.isdigit():
-            raise ValueError("La presentación no puede estar vacía ni ser solo números.")
-
-        
-        if not unidad_medida or unidad_medida.isdigit():
-            raise ValueError("La unidad de medida no puede estar vacía ni ser solo números.")
-
-        
-        if contenido <= 0:
-            raise ValueError("El contenido debe ser un número mayor que cero.")
-
-        
-        if precio_compra < 0 or precio_venta < 0:
-            raise ValueError("Los precios no pueden ser negativo.")
-
-        
-        if stock_minimo < 0 or stock_actual < 0 :
-            raise ValueError("El stock no puede ser negativo.")
-
-        
-        if categoria_seleccionada == "Selecciona Categoría":
-            raise ValueError("Debes seleccionar una categoría.")
-        id_categoria = int(categoria_seleccionada.split(" - ")[0])
-
-        
-        if marca_seleccionada == "Selecciona Marca":
-            raise ValueError("Debes seleccionar una marca.")
-        id_marca = int(marca_seleccionada.split(" - ")[0])
-
-        return {
-            "nombre": nombre,
-            "id_categoria": id_categoria,
-            "id_marca": id_marca,
-            "presentacion": presentacion,
-            "unidad_medida": unidad_medida,
-            "contenido": contenido,
-            "precio_compra": precio_compra,
-            "precio_venta": precio_venta,
-            "stock_minimo": stock_minimo,
-            "stock_actual": stock_actual
-        }
-
-        # Método auxiliar para manejar el guardado
-    def manejar_guardar(self, ventana, campos, combos, accion_guardar):
-        try:
-            valores = self.validar_y_obtener_valores(campos, combos)
-            if accion_guardar(valores):  # Llama al callback (crear o editar)
-                self.cargar_datos()
-                tk.messagebox.showinfo("Éxito", "Operación realizada correctamente.")
-                ventana.destroy()
-            else:
-                tk.messagebox.showerror("Error", "No se pudo realizar la operación.")
-        except ValueError as ve:
-            tk.messagebox.showerror("Error de validación", str(ve))
-        except Exception as e:
-            tk.messagebox.showerror("Error inesperado", f"Ocurrió un error: {e}")
+    
 
     #--- Función para editar producto ---
     def editar_producto(self):
@@ -294,49 +156,7 @@ class VistaProductos(ctk.CTkFrame):
    
     # Metodo para crear producto
     def crear_producto(self):
-        """
-        Abre el formulario para crear un nuevo producto usando auxiliares reutilizables.
-        """
-        dao = ProductoDAO()
-        categorias = dao.obtener_categorias()
-        marcas = dao.obtener_marcas()
-
-        # Configuración de campos y combos
-        campos_config = [
-            ("Nombre Producto", "Ej: Refresco Cola"),
-            ("Presentación", "Ej: Botella"),
-            ("Unidad de Medida", "Ej: Litros"),
-            ("Contenido", "Ej: 2.5"),
-            ("Precio Compra", "Ej: 100.50"),
-            ("Precio Venta", "Ej: 120.00"),
-            ("Stock Mínimo", "Ej: 10"),
-            ("Stock Actual", "Ej: 50")
-            ]
-        combos_config = [
-            ("Categoría", categorias, "Selecciona Categoría"),
-            ("Marca", marcas, "Selecciona Marca")
-            ]
-
-        # Callback para guardar (crear producto)
-        def accion_guardar_crear(valores):
-            nuevo_producto = Producto(
-                id_producto=None,
-                nombre_producto=valores["nombre"],
-                id_categoria=valores["id_categoria"],
-                id_marca=valores["id_marca"],
-                presentacion=valores["presentacion"],
-                unidad_medida=valores["unidad_medida"],
-                contenido=valores["contenido"],
-                precio_compra=valores["precio_compra"],
-                precio_venta=valores["precio_venta"],
-                stock_minimo=valores["stock_minimo"],
-                stock_actual=valores["stock_actual"],
-                estatus=1
-                )
-            return dao.insertar_producto(nuevo_producto)
-
-        # Abrir ventana
-        self.abrir_ventana_formulario("Crear Nuevo Producto", campos_config, combos_config, accion_guardar_crear)
+        VistaCrearProducto(self, self.cargar_datos)
 
     # NUEVO: Método para buscar productos
     def buscar_productos(self):

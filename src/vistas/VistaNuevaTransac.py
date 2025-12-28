@@ -16,8 +16,8 @@ class VistaNuevaTransac(ctk.CTkToplevel):
         self.producto_seleccionado = None  # Para guardar la fila elegida
 
         #Centrado la ventana en la pantalla
-        anchoVist = 1200
-        altoVist = 650
+        anchoVist = 1220
+        altoVist = 700
         
         self.update_idletasks()
         
@@ -56,8 +56,8 @@ class VistaNuevaTransac(ctk.CTkToplevel):
         self.header_tabla.pack(fill="x")
         self.header_tabla.pack_propagate(False)
 
-        # Columnas: ID | NOMBRE | MARCA | PRESENTACIÓN | STOCK | PrecioVen (USD/Bs) | PrecioCom (USD/Bs)
-        headers = [("ID", 0.04), ("NOMBRE", 0.15), ("MARCA", 0.35), ("PRESENT.", 0.47), ("Precio Venta", 0.60), ("Precio Compra", 0.74), ("STOCK", 0.90)]
+        # Columnas: ID | NOMBRE | MARCA | PRESENTACIÓN | PrecioVen (USD/Bs) | PrecioCom (USD/Bs) | STOCK 
+        headers = [("ID", 0.04), ("NOMBRE", 0.13), ("MARCA", 0.28), ("PRESENTACION", 0.37), ("PRECIO VENTA", 0.53), ("PRECIO COMPRA", 0.73), ("STOCK", 0.91)]
         for text, relx in headers:
             ctk.CTkLabel(self.header_tabla, text=text, font=("Segoe UI", 13, "bold"), text_color="#ab3df4").place(relx=relx, rely=0.5, anchor="w")
 
@@ -220,7 +220,7 @@ class VistaNuevaTransac(ctk.CTkToplevel):
         presentacion = getattr(producto, 'contenido', None) or getattr(producto, 'presentacion', '') or ''
 
         cols = [(f"#{producto.id_producto}", 0.025), (producto.nombre_producto, 0.10), 
-                (str(producto.id_marca), 0.30), (presentacion, 0.44), (precio_venta_fmt, 0.55), (precio_compra_fmt, 0.75), (str(producto.stock_actual), 0.95)]
+                (str(producto.id_marca), 0.28), (presentacion, 0.39), (precio_venta_fmt, 0.52), (precio_compra_fmt, 0.73), (str(producto.stock_actual), 0.94)]
         
         for txt, rx in cols:
             l = ctk.CTkLabel(fila, text=txt, font=("Segoe UI", 14))
