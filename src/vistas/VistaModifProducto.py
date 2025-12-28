@@ -6,7 +6,7 @@ class VistaModifProducto(ctk.CTkToplevel):
         super().__init__(parent)
         
         # --- Configuración de Ventana ---
-        self.title("Sistema de Gestión - Editar Producto")
+        self.title("Editar Producto")
         self.after(10, lambda: self.state('normal'))
         self.attributes("-topmost", True) # La mantiene arriba pero permite minimizar
 
