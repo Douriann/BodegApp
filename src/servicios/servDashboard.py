@@ -7,17 +7,24 @@ class ServDashboard:
         self.scraper = BcvScraper()
 
     def obtener_precio_dolar(self):
-        """Llama a la herramienta del grupo con el nombre correcto"""
+        """Usa el BcvScraper para obtener la tasa oficial del día"""
         try:
-            datos = self.scraper.obtener_tasa() 
-            if datos:
-                return datos.get('USD', 'N/A') # Extraemos solo el valor del dólar
-            return "N/A"
-        except:
-            return "Error BCV"
+            scraper = BcvScraper()
+            datos = scraper.obtener_tasa()
+            
+            # Si el scraper devuelve un diccionario, extraemos el valor de 'USD'
+            if datos and isinstance(datos, dict):
+                tasa = datos.get('tasa', 0.0)
+                return float(tasa)
+            
+            return 0.0
+            
+        except Exception as e:
+            print(f"Error al conectar con el scraper del BCV: {e}")
+            return 0.0
 
     def obtener_top_vendidos(self):
-        """Consulta los 3 productos para tu gráfico de barras"""
+        """Consulta los 3 productos para el gráfico de barras"""
         conexion = self.db.conectar()
         if conexion:
             cursor = conexion.cursor()
