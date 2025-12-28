@@ -1,5 +1,5 @@
 import customtkinter as ctk
-from servicios.servDashboard import ServDashboard # Tu "cerebro" de datos
+from servicios.servDashboard import ServDashboard 
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.ticker import MaxNLocator
@@ -7,7 +7,7 @@ from matplotlib.ticker import MaxNLocator
 class VistaDashboard(ctk.CTkFrame):
     def __init__(self, parent, controller, **kwargs):
         super().__init__(parent, **kwargs)
-        self.controller = controller # Guardamos el controlador por si lo necesitas
+        self.controller = controller # Guardamos el controlador por si se necesitas
         self.servicio = ServDashboard()
         
         # --- CONFIGURACIÓN DE COLORES ---
@@ -35,7 +35,7 @@ class VistaDashboard(ctk.CTkFrame):
         self.lbl_ingresos.pack(side="left", expand=True, pady=15)
 
         # Indicador: Tasa BCV
-        self.lbl_tasa = ctk.CTkLabel(self.frame_indicadores, text=f"💵 Tasa BCV\n{tasa_bcv} Bs.", font=("Roboto", 16))
+        self.lbl_tasa = ctk.CTkLabel(self.frame_indicadores, text=f"💵 Tasa BCV\n{tasa_bcv:.2f} Bs.", font=("Roboto", 16))
         self.lbl_tasa.pack(side="left", expand=True, pady=15)
 
         # 3. FRAME DEL GRÁFICO (Top 3 Productos)
