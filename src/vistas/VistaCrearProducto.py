@@ -152,7 +152,7 @@ class VistaCrearProducto(ctk.CTkToplevel):
                     widget.configure(border_color=self.color_error) # Marcar en rojo
 
             # 2. Lógica de mensajes según cantidad de vacíos
-            if len(campos_vacios) > 3:
+            if len(campos_vacios) > 2:
                 VentanaVerificacion(self, "VARIOS CAMPOS INCOMPLETOS", 
                                     f"Faltan {len(campos_vacios)} campos por rellenar. Los hemos marcado en rojo para ti.", 
                                     es_error=True)

@@ -138,7 +138,7 @@ class VistaModifProducto(ctk.CTkToplevel):
         self.btn_guardar.pack(side="right")
 
     def _seccion_titulo(self, texto):
-        lbl = ctk.CTkLabel(self.scroll_body, text=texto.upper(), font=("Segoe UI", 11, "bold"), text_color=("#555555", "#888888"))
+        lbl = ctk.CTkLabel(self.scroll_body, text=texto.upper(), font=("Segoe UI", 11, "bold"), text_color=("#3E3E3E", "#DEDEDE"))
         lbl.pack(pady=(20, 5), padx=10, anchor="w")
 
     def _crear_fila(self):

@@ -17,11 +17,11 @@ class VistaTransac(ctk.CTkFrame):
         self.titulo = ctk.CTkLabel(header_frame, text="Historial de Transacciones", font=("Segoe UI", 24, "bold"))
         self.titulo.pack(side="left", anchor="n") # "n" de norte lo mantiene arriba
 
-        # 2. Creamos un frame pequeño a la derecha para el botón (actúa como "ancla")
+        # 2. Frame pequeño a la derecha para el botón (actúa como "ancla")
         boton_container = ctk.CTkFrame(header_frame, fg_color="transparent")
         boton_container.pack(side="right", fill="y")
 
-        # 3. Colocamos el botón dentro de ese frame con el margen superior
+        # 3. Botón dentro de ese frame con el margen superior
         self.btn_add = ctk.CTkButton(
             boton_container, 
             text="+ Nueva Transacción", 

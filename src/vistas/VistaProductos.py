@@ -1,254 +1,198 @@
 import customtkinter as ctk
-from tkinter import ttk # Necesario para el Treeview
-import tkinter as tk
-
-# Importar el DAO y el modelo Producto
 from servicios.ProductoDAO import ProductoDAO
 from modelos.Producto import Producto
-
-# Importar la vista de modificación de producto
-from vistas.VistaModifProducto import VistaModifProducto
+from vistas.VistaModifProducto import VistaModifProducto, VentanaVerificacion
 from vistas.VistaCrearProducto import VistaCrearProducto
+from PIL import Image
+from ConfigRutas import rutas
 
+class VentanaConfirmacion(ctk.CTkToplevel):
+    def __init__(self, parent, titulo, mensaje, comando_si):
+        super().__init__(parent)
+        self.title(titulo)
+        self.geometry("400x220")
+        self.attributes("-topmost", True)
+        self.grab_set()
+        self.resizable(False, False)
+        self.comando_si = comando_si
 
+        self.update_idletasks()
+        x = (self.winfo_screenwidth() // 2) - 200
+        y = (self.winfo_screenheight() // 2) - 110
+        self.geometry(f"400x220+{x}+{y}")
+
+        self.main_frame = ctk.CTkFrame(self, corner_radius=15, border_width=2, border_color="#E74C3C")
+        self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        ctk.CTkLabel(self.main_frame, text="⚠️ " + titulo, font=("Segoe UI", 18, "bold"), text_color="#E74C3C").pack(pady=(20, 5))
+        ctk.CTkLabel(self.main_frame, text=mensaje, font=("Segoe UI", 13), wraplength=340).pack(pady=10, padx=20)
+
+        btn_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        btn_frame.pack(pady=20)
+
+        self.btn_si = ctk.CTkButton(btn_frame, text="Sí, Eliminar", fg_color="#E74C3C", hover_color="#C0392B",
+                                   width=120, height=35, font=("Segoe UI", 13, "bold"), command=self._ejecutar_si)
+        self.btn_si.pack(side="right", padx=10)
+
+        self.btn_no = ctk.CTkButton(btn_frame, text="Cancelar", fg_color=("#94a3b8", "#475569"), hover_color="#334155",
+                                   width=120, height=35, font=("Segoe UI", 13, "bold"), command=self.destroy)
+        self.btn_no.pack(side="right", padx=10)
+
+    def _ejecutar_si(self):
+        self.comando_si()
+        self.destroy()
 
 class VistaProductos(ctk.CTkFrame):
     def __init__(self, parent, controller):
-        super().__init__(parent)
+        super().__init__(parent, fg_color="transparent")
         self.controller = controller
         self.marcas_dict = self._cargar_diccionario_marcas()
         
-        # --- 1. Título ---
-        self.label_titulo = ctk.CTkLabel(self, text="Inventario de Productos", font=("Roboto", 24))
-        self.label_titulo.pack(pady=20)
+        # --- HEADER ---
+        header_frame = ctk.CTkFrame(self, fg_color="transparent")
+        header_frame.pack(fill="x", padx=20, pady=(20, 10))
 
-        # --- 2. Botón Nuevo ---
-        self.btn_nuevo = ctk.CTkButton(self, text="Nuevo Producto", command=self.crear_producto)
-        self.btn_nuevo.pack(pady=10)
-        
-        # --- Botón Editar ---
-        self.btn_editar = ctk.CTkButton(self, text="Editar Producto", command=self.editar_producto)
-        self.btn_editar.pack(pady=5)
-        
-        # --- Botón Eliminar ---
-        self.btn_eliminar = ctk.CTkButton(self, text="Eliminar Producto", command=self.eliminar_producto)
-        self.btn_eliminar.pack(pady=5)
-        
-        # --- NUEVO: Sección de Búsqueda ---
-        frame_busqueda = ctk.CTkFrame(self)
-        frame_busqueda.pack(pady=10, padx=20, fill="x")
+        self.titulo = ctk.CTkLabel(header_frame, text="Inventario de Productos", font=("Segoe UI", 24, "bold"))
+        self.titulo.pack(side="left", anchor="n")
 
-        # Etiqueta y campo de búsqueda
-        label_buscar = ctk.CTkLabel(frame_busqueda, text="Buscar por nombre:")
-        label_buscar.pack(side="left", padx=10)
+        self.btn_nuevo = ctk.CTkButton(
+            header_frame, text="+ Nuevo Producto", 
+            fg_color="#ab3df4", hover_color="#920cec",
+            font=("Segoe UI", 14, "bold"), height=35,
+            command=self.crear_producto
+        )
+        self.btn_nuevo.pack(side="right", pady=(35, 10))
 
-        self.entry_buscar = ctk.CTkEntry(frame_busqueda, width=200, placeholder_text="Ingresa nombre del producto")
-        self.entry_buscar.pack(side="left", padx=10)
+        # --- BÚSQUEDA ---
+        icono_buscar = ctk.CTkImage(Image.open(rutas.obtener_ruta_imagen("icons-busqueda.png")), size=(20, 20))
+        self.search_card = ctk.CTkFrame(self, fg_color=("white", "#2b2b2b"), height=70)
+        self.search_card.pack(fill="x", padx=20, pady=(10, 5)) 
+        self.search_card.grid_columnconfigure(0, weight=1) 
 
-        # Botón Buscar
-        btn_buscar = ctk.CTkButton(frame_busqueda, text="Buscar", command=self.buscar_productos)
-        btn_buscar.pack(side="left", padx=10)
+        self.entry_buscar = ctk.CTkEntry(self.search_card, height=35, placeholder_text="Buscar producto...", border_color="#ab3df4")
+        self.entry_buscar.grid(row=0, column=0, padx=(20, 10), pady=15, sticky="ew")
+        self.entry_buscar.bind("<KeyRelease>", self.verificar_busqueda_vacia)
 
-        # Botón Limpiar (para resetear búsqueda)
-        btn_limpiar = ctk.CTkButton(frame_busqueda, text="Limpiar", command=self.cargar_datos)
-        btn_limpiar.pack(side="left", padx=10)
-        
-        # --- 3. Configuración del Estilo de la Tabla (Treeview) ---
-        # Esto es necesario porque el Treeview nativo es blanco/gris por defecto
-        style = ttk.Style()
-        style.theme_use("clam") # 'clam' permite modificar colores más fácilmente
-        
-        style.configure("Treeview",
-                        background="#2b2b2b",
-                        foreground="white",
-                        fieldbackground="#2b2b2b",
-                        rowheight=30)
-        
-        style.map('Treeview', background=[('selected', '#1f538d')]) # Color al seleccionar fila
+        btn_buscar = ctk.CTkButton(self.search_card, text="Buscar", width=110, height=35, fg_color="#ab3df4", hover_color="#920cec",
+                                  command=self.buscar_productos, image=icono_buscar)
+        btn_buscar.grid(row=0, column=1, padx=(0, 20), pady=15)
 
-        # --- 4. Crear el Frame para la Tabla (para incluir scrollbar) ---
-        frame_tabla = ctk.CTkFrame(self)
-        frame_tabla.pack(fill="both", expand=True, padx=20, pady=20)
+        # --- CONTADOR ---
+        self.info_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.info_frame.pack(fill="x", padx=25, pady=(0, 10))
+        self.lbl_contador = ctk.CTkLabel(self.info_frame, text="Mostrando 0 productos", font=("Segoe UI", 12, "italic"), text_color=("#555555", "#aaaaaa"))
+        self.lbl_contador.pack(side="left")
 
-        # --- 5. Definir columnas ---
-        # Escogemos las columnas más relevantes para mostrar en el resumen
-        columns = ("id", "nombre", "marca", "precio_venta", "stock_actual", "stock_minimo")
+        # --- TABLA ---
+        self.tabla_container = ctk.CTkFrame(self, fg_color="transparent")
+        self.tabla_container.pack(fill="both", expand=True, padx=20, pady=(10, 10))
 
-        
-        self.tree = ttk.Treeview(frame_tabla, columns=columns, show="headings")
-        
-        # Configurar cabeceras
-        self.tree.heading("id", text="ID")
-        self.tree.heading("nombre", text="Producto")
-        self.tree.heading("marca", text="Marca")
-        self.tree.heading("precio_venta", text="Precio Venta")
-        self.tree.heading("stock_actual", text="Stock Actual")
-        self.tree.heading("stock_minimo", text="Stock Mínimo")
+        self.header_tabla = ctk.CTkFrame(self.tabla_container, fg_color="transparent", height=30)
+        self.header_tabla.pack(fill="x", pady=(0, 5))
 
-        # Configurar ancho de columnas
-        self.tree.column("id", width=50, anchor="center")
-        self.tree.column("nombre", width=100, anchor="w")
-        self.tree.column("marca", width=100, anchor="w")
-        self.tree.column("precio_venta", width=100, anchor="center")
-        self.tree.column("stock_actual", width=100, anchor="center")
-        self.tree.column("stock_minimo", width=80, anchor="center")
+        columnas = [("ID", 0.04), ("PRODUCTO", 0.09), ("MARCA", 0.35), ("PRECIO", 0.50), ("STOCK", 0.65), ("ACCIONES", 0.82)]
+        for texto, pos in columnas:
+            ctk.CTkLabel(self.header_tabla, text=texto, font=("Segoe UI", 11, "bold"), text_color="#ab3df4").place(relx=pos, rely=0.5, anchor="w")
 
-        # Scrollbar vertical
-        scrollbar = ctk.CTkScrollbar(frame_tabla, orientation="vertical", command=self.tree.yview)
-        self.tree.configure(yscroll=scrollbar.set)
-        
-        # Empaquetado
-        scrollbar.pack(side="right", fill="y")
-        self.tree.pack(side="left", fill="both", expand=True)
+        self.scroll_filas = ctk.CTkScrollableFrame(self.tabla_container, fg_color="transparent", scrollbar_button_color="#ab3df4")
+        self.scroll_filas.pack(fill="both", expand=True)
 
-        # --- 6. Cargar datos al iniciar ---
         self.cargar_datos()
+
+    def actualizar_contador(self, cantidad):
+        self.lbl_contador.configure(text=f"Resultados encontrados: {cantidad} productos")
+
+    def verificar_busqueda_vacia(self, event):
+        if not self.entry_buscar.get().strip():
+            self.cargar_datos()
+
+    def crear_fila_producto(self, p):
+        es_critico = p.stock_actual <= 10 or p.stock_actual < p.stock_minimo
+        es_muy_critico = p.stock_actual <= 5
         
-    
+        # Colores
+        color_fondo = ("#FDEDEC", "#422020") if es_muy_critico else ("white", "#333333")
+        color_hover = ("#FADBD8", "#5D2929") if es_muy_critico else ("#f2f2f2", "#3d3d3d")
+        color_texto_stock = "#E74C3C" if es_muy_critico else ("#F39C12" if es_critico else ("#333333", "white"))
 
-    #--- Función para editar producto ---
-    def editar_producto(self):
-        item = self.tree.selection()
-        if not item:
-            tk.messagebox.showwarning("Atención", "Selecciona un producto para editar.")
-            return
+        # Frame de la fila (SIN hover_color para evitar el error)
+        fila = ctk.CTkFrame(
+            self.scroll_filas, 
+            fg_color=color_fondo, 
+            height=55, 
+            corner_radius=8,
+            border_width=2 if es_muy_critico else 0, 
+            border_color="#E74C3C" if es_muy_critico else None
+        )
+        fila.pack(fill="x", pady=4, padx=5)
+        fila.pack_propagate(False)
 
-        valores = self.tree.item(item, "values")
-        id_producto = valores[0]
+        # Funciones para simular el hover manualmente
+        def on_enter(e): fila.configure(fg_color=color_hover)
+        def on_leave(e): fila.configure(fg_color=color_fondo)
+
+        # Vincular eventos a la fila y a sus hijos (labels)
+        fila.bind("<Enter>", on_enter)
+        fila.bind("<Leave>", on_leave)
+
+        # Labels
+        lbl_id = ctk.CTkLabel(fila, text=f"#{p.id_producto}", font=("Segoe UI", 11, "bold"))
+        lbl_id.place(relx=0.02, rely=0.5, anchor="w")
         
+        lbl_nom = ctk.CTkLabel(fila, text=p.nombre_producto[:25], font=("Segoe UI", 12, "bold"))
+        lbl_nom.place(relx=0.08, rely=0.5, anchor="w")
+        
+        ctk.CTkLabel(fila, text=self.marcas_dict.get(p.id_marca, "N/A"), font=("Segoe UI", 11)).place(relx=0.35, rely=0.5, anchor="w")
+        ctk.CTkLabel(fila, text=f"${p.precio_venta:,.2f}", font=("Segoe UI", 12)).place(relx=0.52, rely=0.5, anchor="w")
+        
+        label_stock_text = f"{p.stock_actual} ¡BAJO!" if es_critico else str(p.stock_actual)
+        ctk.CTkLabel(fila, text=label_stock_text, font=("Segoe UI", 13, "bold"), text_color=color_texto_stock).place(relx=0.65, rely=0.5, anchor="w")
+
+        # Botones
+        icono_editar = ctk.CTkImage(Image.open(rutas.obtener_ruta_imagen("icons-editar.png")), size=(20, 20))
+        icono_basura = ctk.CTkImage(Image.open(rutas.obtener_ruta_imagen("icons-basura.png")), size=(20, 20))
+
+        btn_edit = ctk.CTkButton(fila, text=None, width=32, height=30, fg_color="#0070b8", image=icono_editar, command=lambda: self.abrir_formulario_edicion(p))
+        btn_edit.place(relx=0.82, rely=0.5, anchor="w")
+
+        btn_del = ctk.CTkButton(fila, text=None, width=32, height=30, fg_color="#E74C3C", hover_color="#C0392B", image=icono_basura, command=lambda: self.confirmar_eliminacion(p))
+        btn_del.place(relx=0.90, rely=0.5, anchor="w")
+
+    def cargar_datos(self):
+        for child in self.scroll_filas.winfo_children(): child.destroy()
         dao = ProductoDAO()
-        productos = dao.consultar_todos()
-        producto = next((p for p in productos if str(p.id_producto) == str(id_producto)), None)
+        productos = [p for p in dao.consultar_todos() if p.estatus == 1]
+        for p in productos: self.crear_fila_producto(p)
+        self.actualizar_contador(len(productos))
 
-        if producto:
-            self.abrir_formulario_edicion(producto)
-
-    #-- Función para eliminar producto ---
-    def eliminar_producto(self):
-        item = self.tree.selection()
-        if not item:
-            tk.messagebox.showwarning("Atención", "Selecciona un producto para eliminar.")
-            return
-
-        valores = self.tree.item(item, "values")
-        id_producto = valores[0]
-
-        confirmacion = tk.messagebox.askyesno("Confirmar eliminación", "¿Estás seguro de que deseas eliminar este producto?")
-        if not confirmacion:
-            return
-
-        dao = ProductoDAO()
-        producto = next((p for p in dao.consultar_todos() if str(p.id_producto) == str(id_producto)), None)
-
-        if producto:
-            producto.estatus = 0  # ← Eliminado lógico
-            if dao.modificar_producto(producto):
-                self.cargar_datos()
-                tk.messagebox.showinfo("Eliminado", "El producto fue eliminado correctamente.")
-            else:
-                tk.messagebox.showerror("Error", "No se pudo eliminar el producto.")
-
-    
-    #-- Función para abrir formulario de edición ---
-    def abrir_formulario_edicion(self, producto):
-        VistaModifProducto(self, producto, self.cargar_datos)
-
-   
-    # Metodo para crear producto
-    def crear_producto(self):
-        VistaCrearProducto(self, self.cargar_datos)
-
-    # NUEVO: Método para buscar productos
     def buscar_productos(self):
-        """
-        Busca productos por nombre y actualiza la tabla.
-        """
-        termino = self.entry_buscar.get().strip().title()
-
-        if not termino:
-            tk.messagebox.showwarning("Atención", "Ingresa un nombre de producto para buscar.")
-            return
-
+        termino = self.entry_buscar.get().strip()
+        if not termino: return
+        for child in self.scroll_filas.winfo_children(): child.destroy()
         dao = ProductoDAO()
-        resultados = dao.buscar_por_nombre(termino)
-
+        resultados = [p for p in dao.buscar_por_nombre(termino) if p.estatus == 1]
         if not resultados:
-            tk.messagebox.showinfo("Sin resultados", "No se encontraron productos con ese nombre.")
-        
-        # Actualizar tabla con resultados
-        self._actualizar_tabla(resultados)
+            VentanaVerificacion(self.master.winfo_toplevel(), "SIN RESULTADOS", "No hay coincidencias.", es_error=True)
+            self.cargar_datos()
+            return
+        for p in resultados: self.crear_fila_producto(p)
+        self.actualizar_contador(len(resultados))
+
+    def confirmar_eliminacion(self, producto):
+        def proceder():
+            dao = ProductoDAO()
+            producto.estatus = 0
+            if dao.modificar_producto(producto):
+                VentanaVerificacion(self.master.winfo_toplevel(), "ELIMINADO", f"'{producto.nombre_producto}' ha sido borrado.")
+                self.cargar_datos()
+        VentanaConfirmacion(self.master.winfo_toplevel(), "CONFIRMAR ELIMINACIÓN", f"¿Deseas eliminar {producto.nombre_producto}?", comando_si=proceder)
+
+    def abrir_formulario_edicion(self, producto):
+        VistaModifProducto(self.master.winfo_toplevel(), producto, self.cargar_datos)
+
+    def crear_producto(self):
+        VistaCrearProducto(self.master.winfo_toplevel(), self.cargar_datos)
 
     def _cargar_diccionario_marcas(self):
-        """
-        Retorna un diccionario {id_marca: nombre_marca} para mapeo rápido.
-        """
         dao = ProductoDAO()
-        marcas = dao.obtener_marcas()  #  (devuelve lista de tuplas)
-        return {id_marca: nombre for id_marca, nombre in marcas}
-
-    def cargar_datos(self, lista_productos=None):
-        """
-        Consulta la base de datos y llena el Treeview con OBJETOS.
-        """
-        # 1. Limpiar tabla actual (por si refrescas)
-        for item in self.tree.get_children():
-            self.tree.delete(item)
-
-        # 2. Instanciar DAO y buscar datos
-        dao = ProductoDAO()
-        lista_productos = dao.consultar_todos() # Esto devuelve lista de OBJETOS Producto
-
-        # 3. Insertar datos
-        for p in lista_productos:
-            
-            
-            if p.estatus == 1:  # Mostrar solo productos activos
-                # Definir la etiqueta si el stock actual es menor al mínimo
-                tags = ("alerta",) if p.stock_actual < p.stock_minimo else ()
-                # nueva columna marca
-                nombre_marca = self.marcas_dict.get(p.id_marca, "Sin Marca")
-                self.tree.insert("", "end", values=(
-                    p.id_producto,
-                    p.nombre_producto,
-                    nombre_marca,
-                    f"${p.precio_venta:,.2f}", # Formato de moneda
-                    p.stock_actual,
-                    p.stock_minimo,
-                ), tags=tags)
-                
-                
-        # Configurar estilo para productos con bajo stock
-        self.tree.tag_configure("alerta", foreground="red")
-        print(f"Datos cargados: {len(lista_productos)} registros.")
-
-    # NUEVO: Método auxiliar para actualizar tabla 
-    def _actualizar_tabla(self, lista_productos):
-        """
-        Consulta la base de datos y llena el Treeview con OBJETOS.
-        """
-        # 1. Limpiar tabla actual (por si refrescas)
-        for item in self.tree.get_children():
-            self.tree.delete(item)
-
-        # 2. Insertar datos
-        for p in lista_productos:
-            
-
-            if p.estatus == 1:  # Mostrar solo productos activos
-                # Definir la etiqueta si el stock actual es menor al mínimo
-                tags = ("alerta",) if p.stock_actual < p.stock_minimo else ()
-                # nueva columna marca
-                nombre_marca = self.marcas_dict.get(p.id_marca, "Sin Marca")
-                self.tree.insert("", "end", values=(
-                    p.id_producto,
-                    p.nombre_producto,
-                    nombre_marca,
-                    f"${p.precio_venta:,.2f}", # Formato de moneda
-                    p.stock_actual,
-                    p.stock_minimo,
-                ), tags=tags)
-                
-                
-        # Configurar estilo para productos con bajo stock
-        self.tree.tag_configure("alerta", foreground="red")
-        print(f"Datos cargados: {len(lista_productos)} registros.")
+        return {id_m: nombre for id_m, nombre in dao.obtener_marcas()}
