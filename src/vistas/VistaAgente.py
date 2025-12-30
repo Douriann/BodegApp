@@ -1,7 +1,9 @@
+
 import customtkinter as ctk
 from servicios.Sophia import Agente
 from google import genai
 import os
+import threading
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -54,27 +56,30 @@ class VistaAgente(ctk.CTkToplevel):
         btn_emp_conversacion.pack(pady=5)
     
     def enviar_mensaje(self):
+
         mensaje = (self.entry_enviar.get() or "").strip()
         if not mensaje:
             return
-                    # Mostrar el mensaje del usuario
+        # Mostrar el mensaje del usuario
         self.textbox.insert("end", f"Tú: {mensaje}\n")
         self.entry_enviar.delete(0, "end")
-        try:
 
-            # Enviar al agente y mostrar la respuesta
-            respuesta = self.sophie.send(mensaje)
-            self.textbox.insert("end", f"Sophie: {respuesta}\n")
-
-            # Intentar desplazar al final si el widget lo soporta
+        def tarea():
             try:
-                self.textbox.see("end")
-            except Exception:
-                pass
-        except Exception as e:
-            self.textbox.insert("end", f"Error al enviar el mensaje: {e}\n")
-            respuesta = f"Error al enviar el mensaje: {e}"
-        return respuesta
+                respuesta = self.sophie.send(mensaje)
+            except Exception as e:
+                respuesta = f"Error al enviar el mensaje: {e}"
+            # Actualizar la UI en el hilo principal
+            self.after(0, lambda: self._mostrar_respuesta(respuesta))
+
+        threading.Thread(target=tarea, daemon=True).start()
+
+    def _mostrar_respuesta(self, respuesta):
+        self.textbox.insert("end", f"Sophie: {respuesta}\n")
+        try:
+            self.textbox.see("end")
+        except Exception:
+            pass
     
     def enviar_primer_mensaje(self):
         primer_mensaje = """
@@ -95,18 +100,12 @@ class VistaAgente(ctk.CTkToplevel):
         - No realices funciones que no puedas cumplir (ej: no hagas reservas, no envíes emails, etc).
         SIGUIENTE INSTRUCCIÓN: Hablaras como si estuvieras hablando con el cliente por primera vez, así que saludale.
         """
-        try:
 
-            # Enviar al agente y mostrar la respuesta
-            respuesta = self.sophie.send(primer_mensaje)
-            self.textbox.insert("end", f"Sophie: {respuesta}\n")
-
-            # Intentar desplazar al final si el widget lo soporta
+        def tarea():
             try:
-                self.textbox.see("end")
-            except Exception:
-                pass
-        except Exception as e:
-            self.textbox.insert("end", f"Error al enviar el mensaje: {e}\n")
-            respuesta = f"Error al enviar el mensaje: {e}"
-        return respuesta
+                respuesta = self.sophie.send(primer_mensaje)
+            except Exception as e:
+                respuesta = f"Error al enviar el mensaje: {e}"
+            self.after(0, lambda: self._mostrar_respuesta(respuesta))
+
+        threading.Thread(target=tarea, daemon=True).start()
