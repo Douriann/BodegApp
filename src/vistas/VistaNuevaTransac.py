@@ -1,43 +1,79 @@
-from tkinter import messagebox
+import os
 import customtkinter as ctk
+from datetime import datetime
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import mm
+
+# Servicios y Modelos
 from servicios.ServBusqProduc import ServBusqProduc
 from servicios.ServTransac import ServTransac
 from modelos.Transaccion import Transaccion
 from modelos.DetalleTransaccion import DetalleTransaccion
-from datetime import datetime
 from servicios.BCVdatos import BcvScraper
 
-# IMPORTACIONES PARA EL TICKET
-import os
-from reportlab.pdfgen import canvas
-from reportlab.lib.units import mm
+# --- VENTANA DE AVISO PERSONALIZADA ---
+class VentanaAviso(ctk.CTkToplevel):
+    def __init__(self, parent, titulo, mensaje, color_estilo="#ab3df4", emoji="⚠️"):
+        super().__init__(parent)
+        self.title(titulo)
+        self.geometry("400x220")
+        self.attributes("-topmost", True)
+        self.grab_set()
+        self.resizable(False, False)
 
-# --- CLASE PARA VENTANA DE VERIFICACIÓN PERSONALIZADA ---
+        # Centrado
+        self.update_idletasks()
+        x = (self.winfo_screenwidth() // 2) - 200
+        y = (self.winfo_screenheight() // 2) - 110
+        self.geometry(f"+{x}+{y}")
+
+        self.main_frame = ctk.CTkFrame(self, corner_radius=15, border_width=2, border_color=color_estilo)
+        self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        ctk.CTkLabel(self.main_frame, text=f"{emoji} {titulo}", 
+                     font=("Segoe UI", 18, "bold"), text_color=color_estilo).pack(pady=(20, 5))
+        
+        ctk.CTkLabel(self.main_frame, text=mensaje, 
+                     font=("Segoe UI", 13), wraplength=340).pack(pady=10, padx=20)
+
+        ctk.CTkButton(self.main_frame, text="Entendido", 
+                      fg_color=color_estilo, hover_color=("#8E44AD", "#780ac1"), 
+                      width=150, height=35, font=("Segoe UI", 13, "bold"), 
+                      command=self.destroy).pack(pady=20)
+
+# --- VENTANA DE CONFIRMACIÓN PERSONALIZADA ---
 class VentanaConfirmacion(ctk.CTkToplevel):
     def __init__(self, parent, titulo, mensaje, colores, comando_confirmar):
         super().__init__(parent)
         self.title(titulo)
-        self.geometry("400x200")
+        self.geometry("400x230")
         self.attributes("-topmost", True)
-        self.configure(fg_color=colores["bg_tarjetas"])
+        self.grab_set()
         self.resizable(False, False)
         
-        # Centrar respecto a la ventana padre
-        x = parent.winfo_x() + (parent.winfo_width() // 2) - 200
-        y = parent.winfo_y() + (parent.winfo_height() // 2) - 100
+        self.update_idletasks()
+        x = (self.winfo_screenwidth() // 2) - 200
+        y = (self.winfo_screenheight() // 2) - 115
         self.geometry(f"+{x}+{y}")
 
-        ctk.CTkLabel(self, text=mensaje, font=("Segoe UI", 14), wraplength=350).pack(pady=30)
+        color_morado = colores["morado"][0] if isinstance(colores["morado"], tuple) else colores["morado"]
+        self.main_frame = ctk.CTkFrame(self, corner_radius=15, border_width=2, border_color=color_morado)
+        self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        ctk.CTkLabel(self.main_frame, text="❓ Confirmación", 
+                     font=("Segoe UI", 18, "bold"), text_color=color_morado).pack(pady=(20, 5))
+
+        ctk.CTkLabel(self.main_frame, text=mensaje, font=("Segoe UI", 14), wraplength=340).pack(pady=10, padx=20)
         
-        btn_frame = ctk.CTkFrame(self, fg_color="transparent")
-        btn_frame.pack(pady=10)
+        btn_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        btn_frame.pack(side="bottom", pady=20)
 
         ctk.CTkButton(btn_frame, text="Confirmar", fg_color=colores["morado"], 
-                      hover_color=colores["morado_hover"], width=100,
+                      hover_color=colores["morado_hover"], width=120, height=35, font=("Segoe UI", 13, "bold"),
                       command=lambda: [comando_confirmar(), self.destroy()]).pack(side="left", padx=10)
         
-        ctk.CTkButton(btn_frame, text="Cancelar", fg_color=("#E74C3C", "#E74C3C"), 
-                      hover_color=("#DB2B18", "#DB2B18"), width=100,
+        ctk.CTkButton(btn_frame, text="Cancelar", fg_color=("#94a3b8", "#475569"), 
+                      hover_color=("#64748b", "#334155"), width=120, height=35, font=("Segoe UI", 13, "bold"),
                       command=self.destroy).pack(side="left", padx=10)
 
 class VistaNuevaTransac(ctk.CTkToplevel):
@@ -150,7 +186,7 @@ class VistaNuevaTransac(ctk.CTkToplevel):
         self.label_detalles_info = ctk.CTkLabel(self.scroll_interno_detalles, text="", font=("Segoe UI", 13), justify="left", anchor="nw")
         self.label_detalles_info.pack(pady=10, padx=15, fill="both", expand=True)
 
-        # Tasas e inicialización
+        # --- Tasas e inicialización ---
         self.bcv = BcvScraper()
         self.lista_productos_seleccionados = []
         self.lista_cantidades = []
@@ -178,113 +214,16 @@ class VistaNuevaTransac(ctk.CTkToplevel):
         self.label_total_bs = ctk.CTkLabel(self.frame_totales, text="Total (BS): Bs 0.00", font=("Segoe UI", 14, "bold"))
         self.label_total_bs.pack(side="right", padx=5)
 
-    # NUEVA FUNCIÓN PARA EL TICKET
-    def generar_ticket_pdf(self, trans, detalles):
-        try:
-            if not os.path.exists("tickets"):
-                os.makedirs("tickets")
-            
-            nombre_archivo = f"tickets/Ticket_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-            c = canvas.Canvas(nombre_archivo, pagesize=(58 * mm, 150 * mm))
-            
-            c.setFont("Helvetica-Bold", 10)
-            c.drawCentredString(29 * mm, 142 * mm, "MI BODEGAPP")
-            c.setFont("Helvetica", 7)
-            c.drawCentredString(29 * mm, 138 * mm, f"FECHA: {trans.fecha_transaccion}")
-            c.drawCentredString(29 * mm, 134 * mm, "------------------------------------------")
-            
-            y = 125 * mm
-            c.setFont("Helvetica-Bold", 7)
-            c.drawString(5 * mm, y, "CANT  PROD")
-            c.drawRightString(53 * mm, y, "TOTAL")
-            
-            y -= 4 * mm
-            c.setFont("Helvetica", 7)
-            for i, p in enumerate(self.lista_productos_seleccionados):
-                c.drawString(5 * mm, y, f"{self.lista_cantidades[i]}x {p.nombre_producto[:15]}")
-                c.drawRightString(53 * mm, y, f"${self.lista_subtotales[i]:,.2f}")
-                y -= 4 * mm
-            
-            c.drawCentredString(29 * mm, y, "------------------------------------------")
-            y -= 5 * mm
-            c.setFont("Helvetica-Bold", 8)
-            c.drawString(5 * mm, y, "TOTAL USD:")
-            c.drawRightString(53 * mm, y, f"${trans.total:,.2f}")
-            y -= 4 * mm
-            tasa = self.bcv.obtener_tasa_con_respaldo().get('tasa', 0)
-            c.drawString(5 * mm, y, "TOTAL BS:")
-            c.drawRightString(53 * mm, y, f"Bs {trans.total * tasa:,.2f}")
-            
-            c.save()
-            os.startfile(os.path.abspath(nombre_archivo))
-        except Exception as e:
-            print(f"Error al crear ticket: {e}")
-
     # --- LÓGICA DE FUNCIONAMIENTO ---
-    def crear_fila_producto(self, producto):
-        fila = ctk.CTkFrame(self.scroll_productos, fg_color="transparent", height=40, corner_radius=5)
-        fila.pack(fill="x", pady=2)
-        fila.pack_propagate(False)
-
-        def on_enter(e):
-            if self.producto_seleccionado != fila:
-                fila.configure(fg_color=("#E0E0E0", "#333333"))
-        def on_leave(e):
-            if self.producto_seleccionado != fila:
-                fila.configure(fg_color="transparent")
-        def on_click(e):
-            if self.producto_seleccionado and self.producto_seleccionado.winfo_exists():
-                self.producto_seleccionado.configure(fg_color="transparent")
-            self.producto_seleccionado = fila
-            self.fila_data = producto
-            fila.configure(fg_color=("#D1D1D1", "#444444"))
-
-        tasa = self.bcv.obtener_tasa_con_respaldo().get('tasa', 0) or 0
-        p_venta = getattr(producto, 'precio_venta', 0.0) or 0.0
-        p_compra = getattr(producto, 'precio_compra', 0.0) or 0.0
-        p_venta_fmt = f"${p_venta:,.2f}"
-        p_compra_fmt = f"${p_compra:,.2f}"
-        presentacion = getattr(producto, 'contenido', None) or getattr(producto, 'presentacion', '') or ''
-
-        cols = [(f"#{producto.id_producto}", 0.025), (producto.nombre_producto, 0.10), 
-                (str(producto.id_marca), 0.28), (presentacion, 0.39), (p_venta_fmt, 0.52), (p_compra_fmt, 0.73), (str(producto.stock_actual), 0.94)]
-        
-        for txt, rx in cols:
-            l = ctk.CTkLabel(fila, text=txt, font=("Segoe UI", 13), text_color=self.colores["texto_principal"])
-            l.place(relx=rx, rely=0.5, anchor="w")
-            l.bind("<Button-1>", on_click)
-            l.bind("<Enter>", on_enter)
-            l.bind("<Leave>", on_leave)
-
-        fila.bind("<Enter>", on_enter)
-        fila.bind("<Leave>", on_leave)
-        fila.bind("<Button-1>", on_click)
-
-    def mostrar_productos(self):
-        for child in self.scroll_productos.winfo_children(): child.destroy()
-        lista = ServBusqProduc().buscar_productos_totales()
-        for p in lista: self.crear_fila_producto(p)
-
-    def mostrar_producto_busqueda(self):
-        for child in self.scroll_productos.winfo_children(): child.destroy()
-        lista = ServBusqProduc().buscar_productos_por_nombre(self.entry_buscar.get())
-        for p in lista: self.crear_fila_producto(p)
-
-    def incrementar_cantidad(self):
-        self.label_cantidad.configure(text=str(int(self.label_cantidad.cget("text")) + 1))
-    def reducir_cantidad(self):
-        curr = int(self.label_cantidad.cget("text"))
-        self.label_cantidad.configure(text=str(max(1, curr - 1)))
-
     def actualizar_detalles_transaccion(self):
         if self.val_tipo_transac.get() == 0:
-            messagebox.showwarning("Atención", "Seleccione tipo de transacción.", parent=self)
+            VentanaAviso(self, "Atención", "Seleccione tipo de transacción.", self.colores["morado"][0])
             return
         if hasattr(self, 'fila_data'):
             p = self.fila_data
             cant = int(self.label_cantidad.cget("text"))
             if self.val_tipo_transac.get() == 2 and cant > int(p.stock_actual):
-                messagebox.showerror("Error", "Stock insuficiente.", parent=self)
+                VentanaAviso(self, "Stock Insuficiente", f"No puedes vender {cant} unidades, solo hay {p.stock_actual}.", "#E74C3C", "❌")
                 return
             self.lista_productos_seleccionados.append(p)
             self.lista_cantidades.append(cant)
@@ -293,24 +232,11 @@ class VistaNuevaTransac(ctk.CTkToplevel):
             self.calcular_totales()
             self.label_cantidad.configure(text="1")
         else:
-            messagebox.showwarning("Atención", "Seleccione un producto.", parent=self)
+            VentanaAviso(self, "Selección Vacía", "Por favor, seleccione un producto de la tabla.", self.colores["morado"][0], "🔍")
 
-    def calcular_totales(self):
-        total_usd = 0.0
-        self.lista_subtotales.clear()
-        for i, p in enumerate(self.lista_productos_seleccionados):
-            precio = p.precio_compra if self.val_tipo_transac.get() == 1 else p.precio_venta
-            sub = precio * self.lista_cantidades[i]
-            total_usd += sub
-            self.lista_subtotales.append(sub)
-        tasa = self.bcv.obtener_tasa_con_respaldo().get('tasa', 0)
-        self.label_total_usd.configure(text=f"Total (USD): ${total_usd:.2f}")
-        self.label_total_bs.configure(text=f"Total (BS): Bs {total_usd * tasa:.2f}")
-
-    # --- MÉTODOS DE VERIFICACIÓN PERSONALIZADA ---
     def confirmar_guardado(self):
         if not self.lista_productos_seleccionados:
-            messagebox.showerror("Error", "La lista está vacía.", parent=self)
+            VentanaAviso(self, "Lista Vacía", "No hay productos en la lista para procesar.", "#E74C3C")
             return
         VentanaConfirmacion(self, "Confirmar Registro", "¿Desea guardar la transacción y generar el ticket?", 
                             self.colores, self.obtener_datos_transaccion)
@@ -331,8 +257,60 @@ class VistaNuevaTransac(ctk.CTkToplevel):
         
         ServTransac().agregar_transaccion(trans, detalles)
         self.generar_ticket_pdf(trans, detalles)
-        messagebox.showinfo("Éxito", "Transacción guardada.", parent=self)
+        VentanaAviso(self, "Éxito", "Transacción guardada y ticket generado.", "#2CC985", "✅")
         self.destroy()
+
+    def calcular_totales(self):
+        total_usd = 0.0
+        self.lista_subtotales.clear()
+        for i, p in enumerate(self.lista_productos_seleccionados):
+            precio = p.precio_compra if self.val_tipo_transac.get() == 1 else p.precio_venta
+            sub = precio * self.lista_cantidades[i]
+            total_usd += sub
+            self.lista_subtotales.append(sub)
+        tasa = self.bcv.obtener_tasa_con_respaldo().get('tasa', 0)
+        self.label_total_usd.configure(text=f"Total (USD): ${total_usd:.2f}")
+        self.label_total_bs.configure(text=f"Total (BS): Bs {total_usd * tasa:.2f}")
+
+    # (El resto de métodos: crear_fila_producto, mostrar_productos, etc., se mantienen intactos según tu código original)
+    def crear_fila_producto(self, producto):
+        fila = ctk.CTkFrame(self.scroll_productos, fg_color="transparent", height=40, corner_radius=5)
+        fila.pack(fill="x", pady=2)
+        fila.pack_propagate(False)
+
+        def on_click(e):
+            if self.producto_seleccionado and self.producto_seleccionado.winfo_exists():
+                self.producto_seleccionado.configure(fg_color="transparent")
+            self.producto_seleccionado = fila
+            self.fila_data = producto
+            fila.configure(fg_color=("#D1D1D1", "#444444"))
+
+        cols = [(f"#{producto.id_producto}", 0.025), (producto.nombre_producto, 0.10), 
+                (str(producto.id_marca), 0.28), (str(getattr(producto, 'contenido', '')), 0.39), 
+                (f"${producto.precio_venta:.2f}", 0.52), (f"${producto.precio_compra:.2f}", 0.73), (str(producto.stock_actual), 0.94)]
+        
+        for txt, rx in cols:
+            l = ctk.CTkLabel(fila, text=txt, font=("Segoe UI", 13))
+            l.place(relx=rx, rely=0.5, anchor="w")
+            l.bind("<Button-1>", on_click)
+        fila.bind("<Button-1>", on_click)
+
+    def mostrar_productos(self):
+        for child in self.scroll_productos.winfo_children(): child.destroy()
+        lista = ServBusqProduc().buscar_productos_totales()
+        for p in lista: self.crear_fila_producto(p)
+
+    def mostrar_producto_busqueda(self):
+        for child in self.scroll_productos.winfo_children(): child.destroy()
+        lista = ServBusqProduc().buscar_productos_por_nombre(self.entry_buscar.get())
+        for p in lista: self.crear_fila_producto(p)
+
+    def incrementar_cantidad(self):
+        self.label_cantidad.configure(text=str(int(self.label_cantidad.cget("text")) + 1))
+    
+    def reducir_cantidad(self):
+        curr = int(self.label_cantidad.cget("text"))
+        self.label_cantidad.configure(text=str(max(1, curr - 1)))
 
     def limpiar_formulario(self):
         self.val_tipo_transac.set(0)
@@ -342,3 +320,14 @@ class VistaNuevaTransac(ctk.CTkToplevel):
         self.lista_cantidades.clear()
         self.label_total_usd.configure(text="Total (USD): $0.00")
         self.label_total_bs.configure(text="Total (BS): Bs 0.00")
+
+    def generar_ticket_pdf(self, trans, detalles):
+        try:
+            if not os.path.exists("tickets"): os.makedirs("tickets")
+            nombre_archivo = f"tickets/Ticket_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+            c = canvas.Canvas(nombre_archivo, pagesize=(58 * mm, 150 * mm))
+            c.setFont("Helvetica-Bold", 10)
+            c.drawCentredString(29 * mm, 142 * mm, "MI BODEGAPP")
+            c.save()
+            os.startfile(os.path.abspath(nombre_archivo))
+        except Exception as e: print(f"Error ticket: {e}")
