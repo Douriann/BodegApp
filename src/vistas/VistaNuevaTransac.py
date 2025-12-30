@@ -118,6 +118,9 @@ class VistaNuevaTransac(ctk.CTkToplevel):
         self.entry_buscar = ctk.CTkEntry(self.busqueda_frame, placeholder_text="Buscar producto por nombre...", width=680, height=35)
         self.entry_buscar.pack(side="left", padx=(0, 10))
         self.entry_buscar.bind("<KeyRelease>", self.verificar_busqueda_vacia)
+        # Permitir ejecutar la búsqueda con la tecla Enter (Return y Numpad Enter)
+        self.entry_buscar.bind("<Return>", lambda e: self.mostrar_producto_busqueda())
+        self.entry_buscar.bind("<KP_Enter>", lambda e: self.mostrar_producto_busqueda())
 
         self.btn_buscar = ctk.CTkButton(self.busqueda_frame, text="Buscar", width=100, height=35, 
                                        fg_color=self.colores["morado"], hover_color=self.colores["morado_hover"], command=self.mostrar_producto_busqueda)
@@ -257,6 +260,15 @@ class VistaNuevaTransac(ctk.CTkToplevel):
         trans = Transaccion(None, datetime.now().strftime("%Y-%m-%d"), self.val_tipo_transac.get(), sum(self.lista_subtotales), self.entry_desc.get() or "Sin observaciones", 1)
         
         ServTransac().agregar_transaccion(trans, detalles)
+        # Notificar al padre para que actualice la tabla de transacciones
+        try:
+            parent = self.master
+            if hasattr(parent, "event_generate"):
+                parent.event_generate("<<TransaccionCreada>>")
+            if hasattr(parent, "recibir_datos_nuevos"):
+                parent.recibir_datos_nuevos(None)
+        except Exception as e:
+            print(f"Error notificando actualización de transacciones: {e}")
         self.generar_ticket_pdf(trans, detalles)
         VentanaAviso(self, "Éxito", "Transacción guardada y ticket generado.", "#2CC985", "✅")
         self.destroy()

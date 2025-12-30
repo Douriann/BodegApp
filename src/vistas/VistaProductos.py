@@ -126,6 +126,9 @@ class VistaProductos(ctk.CTkFrame):
         self.entry_buscar = ctk.CTkEntry(self.search_card, height=35, placeholder_text="Buscar producto...", border_color="#ab3df4")
         self.entry_buscar.grid(row=0, column=0, padx=(20, 10), pady=15, sticky="ew")
         self.entry_buscar.bind("<KeyRelease>", self.verificar_busqueda_vacia)
+        # Ejecutar búsqueda al presionar Enter (Return y Numpad Enter)
+        self.entry_buscar.bind("<Return>", lambda e: self.buscar_productos())
+        self.entry_buscar.bind("<KP_Enter>", lambda e: self.buscar_productos())
 
         btn_buscar = ctk.CTkButton(self.search_card, text="Buscar", width=110, height=35, fg_color="#ab3df4", hover_color="#920cec",
                                   command=self.buscar_productos, image=icono_buscar)
