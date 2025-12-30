@@ -117,6 +117,7 @@ class VistaNuevaTransac(ctk.CTkToplevel):
 
         self.entry_buscar = ctk.CTkEntry(self.busqueda_frame, placeholder_text="Buscar producto por nombre...", width=680, height=35)
         self.entry_buscar.pack(side="left", padx=(0, 10))
+        self.entry_buscar.bind("<KeyRelease>", self.verificar_busqueda_vacia)
 
         self.btn_buscar = ctk.CTkButton(self.busqueda_frame, text="Buscar", width=100, height=35, 
                                        fg_color=self.colores["morado"], hover_color=self.colores["morado_hover"], command=self.mostrar_producto_busqueda)
@@ -305,6 +306,10 @@ class VistaNuevaTransac(ctk.CTkToplevel):
     def mostrar_producto_busqueda(self):
         for child in self.scroll_productos.winfo_children(): child.destroy()
         lista = ServBusqProduc().buscar_productos_por_nombre(self.entry_buscar.get())
+        if not lista:
+            VentanaAviso(self, "Sin Resultados", "No se encontraron productos que coincidan con la búsqueda.", self.colores["morado"][0], "🔍")
+            self.mostrar_productos()
+            return
         for p in lista: self.crear_fila_producto(p)
 
     def incrementar_cantidad(self):
@@ -313,6 +318,10 @@ class VistaNuevaTransac(ctk.CTkToplevel):
     def reducir_cantidad(self):
         curr = int(self.label_cantidad.cget("text"))
         self.label_cantidad.configure(text=str(max(1, curr - 1)))
+    
+    def verificar_busqueda_vacia(self, event):
+        if not self.entry_buscar.get().strip():
+            self.mostrar_productos()
 
     def limpiar_formulario(self):
         self.val_tipo_transac.set(0)
