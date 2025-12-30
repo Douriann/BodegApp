@@ -115,7 +115,7 @@ class VistaTransac(ctk.CTkFrame):
     def filtrar_tabla(self, filtro):
         for child in self.scroll_filas.winfo_children():
             child.destroy()
-        for transac in reversed(self.transacciones_full):
+        for transac in self.transacciones_full:
             tipo_actual = "COMPRA" if int(transac.id_tipo) == 1 else "VENTA"
             if filtro == "TODOS" or filtro == tipo_actual:
                 self.crear_fila_transaccion(transac)
