@@ -148,7 +148,7 @@ class VistaProductos(ctk.CTkFrame):
         for texto, pos in columnas:
             ctk.CTkLabel(self.header_tabla, text=texto, font=("Segoe UI", 11, "bold"), text_color="#ab3df4").place(relx=pos, rely=0.5, anchor="w")
 
-        self.scroll_filas = ctk.CTkScrollableFrame(self.tabla_container, fg_color="transparent", scrollbar_button_color="#ab3df4")
+        self.scroll_filas = ctk.CTkScrollableFrame(self.tabla_container, fg_color="transparent", scrollbar_button_color="#ab3df4", scrollbar_button_hover_color="#c06ef7")
         self.scroll_filas.pack(fill="both", expand=True)
 
         self.cargar_datos()
