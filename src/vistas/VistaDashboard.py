@@ -8,6 +8,7 @@ from servicios.BCVdatos import BcvScraper
 from servicios.ServTransac import ServTransac
 from servicios.ServProdTransac import ServProdTransac
 from ConfigRutas import rutas 
+from vistas.VistaAgente import VistaAgente
 import math
 
 import matplotlib
@@ -19,6 +20,7 @@ class VistaDashboard(ctk.CTkFrame):
         super().__init__(parent, fg_color=self.MAIN_BG)
         
         self.controller = controller
+        self.ventana_toplevel = None
         self.dao = ProductoDAO()
         self.scraper_bcv = BcvScraper()
         self.serv_transac = ServTransac()
@@ -93,7 +95,8 @@ class VistaDashboard(ctk.CTkFrame):
             self.btn_ia = ctk.CTkButton(
                 self, text="", border_width=2, border_color="#ab3df4",
                 image=self.icono_sophie, width=40, height=40,
-                fg_color="#552575", hover_color="#b874e5", cursor="hand2"
+                fg_color="#552575", hover_color="#b874e5", cursor="hand2",
+                command=self.crear_vent_agente
             )
             self.btn_ia.place(relx=0.90, rely=0.90, anchor="center")
 
@@ -248,6 +251,13 @@ class VistaDashboard(ctk.CTkFrame):
             FigureCanvasTkAgg(fig, master=card).get_tk_widget().pack(padx=10, pady=10, fill="both")
             plt.close(fig)
         except: pass
+
+    def crear_vent_agente(self):
+        if self.ventana_toplevel is None or not self.ventana_toplevel.winfo_exists():
+            self.ventana_toplevel = VistaAgente(self)
+            self.ventana_toplevel.after(100, lambda: self.ventana_toplevel.lift)
+        else:
+            self.ventana_toplevel.focus()
 
     #Cuadro de Alerta de Reposicion de Productos
     def crear_cuadro_reposicion(self, df):

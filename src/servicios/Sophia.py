@@ -26,7 +26,6 @@ api_key = os.getenv("GEMINI_API_KEY")
 if not api_key:
     raise RuntimeError("GEMINI_API_KEY environment variable is not set. Define it in your environment or in a .env file.")
 
-client = genai.Client(api_key=api_key)
 
 product_tool = {
     "type": "function",
@@ -58,19 +57,6 @@ transactions_tool = {
     },
 }
 
-def print_output(output):
-    if getattr(output, "type", None) == "function_call":
-        print(f"Tool Call: {output.name}({output.arguments})")
-    elif getattr(output, "text", None) is not None:
-        print(f"Model: {output.text}")
-    else:
-        print(f"Model output (type={getattr(output,'type',None)}): {getattr(output, 'arguments', None)}")
-
-def print_last_output(interaction):
-    if not getattr(interaction, 'outputs', None):
-        print("Model returned no outputs")
-    else:
-        print_output(interaction.outputs[-1])
 
 class Agente:
     """Clase que maneja interacciones con el modelo y soporta llamadas a herramientas (tools).
@@ -191,7 +177,7 @@ class Agente:
 
 
 # Ejemplo de uso: crear el agente e interactuar
-if __name__ == "__main__":
+"""if __name__ == "__main__":
     agent = Agente(client, tools=[product_tool, transactions_tool])
 
     # Interacción 1: decirle al agente tu nombre
@@ -208,4 +194,4 @@ if __name__ == "__main__":
     respuesta3 = agent.send(
         "Cuales productos están bajos de stock? compara el stock actual con el stock mínimo."
     )
-    print("Agente:", respuesta3)
+    print("Agente:", respuesta3)"""
