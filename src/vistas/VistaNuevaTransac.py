@@ -285,9 +285,11 @@ class VistaNuevaTransac(ctk.CTkToplevel):
             self.fila_data = producto
             fila.configure(fg_color=("#D1D1D1", "#444444"))
 
+        tasa = self.bcv.obtener_tasa_con_respaldo().get('tasa', 0)
+
         cols = [(f"#{producto.id_producto}", 0.025), (producto.nombre_producto, 0.10), 
-                (str(producto.id_marca), 0.28), (str(getattr(producto, 'contenido', '')), 0.39), 
-                (f"${producto.precio_venta:.2f}", 0.52), (f"${producto.precio_compra:.2f}", 0.73), (str(producto.stock_actual), 0.94)]
+                (str(producto.id_marca), 0.28), (str(producto.presentacion), 0.39), 
+                (f"${producto.precio_venta:.2f} / Bs {producto.precio_venta * tasa:.2f}", 0.52), (f"${producto.precio_compra:.2f} / Bs {producto.precio_compra * tasa:.2f}", 0.73), (str(producto.stock_actual), 0.94)]
         
         for txt, rx in cols:
             l = ctk.CTkLabel(fila, text=txt, font=("Segoe UI", 13))
