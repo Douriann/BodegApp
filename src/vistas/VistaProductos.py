@@ -251,7 +251,7 @@ class VistaProductos(ctk.CTkFrame):
         dao = ProductoDAO()
         self.productos_actuales = [p for p in dao.buscar_por_nombre(termino) if p.estatus == 1]
         if not self.productos_actuales:
-            VentanaVerificacion(self.master.winfo_toplevel(), "SIN RESULTADOS", "No hay coincidencias.", es_error=True)
+            VentanaVerificacion(self.master.winfo_toplevel(), "SIN RESULTADOS", "No hay coincidencias.")
             self.cargar_datos()
             return
         for p in self.productos_actuales: self.crear_fila_producto(p)
