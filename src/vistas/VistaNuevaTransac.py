@@ -286,6 +286,14 @@ class VistaNuevaTransac(ctk.CTkToplevel):
             self.fila_data = producto
             fila.configure(fg_color=("#D1D1D1", "#444444"))
 
+        def on_enter(e):
+            if self.producto_seleccionado != fila:
+                fila.configure(fg_color=("#E0E0E0", "#333333"))
+        
+        def on_leave(e):
+            if self.producto_seleccionado != fila:
+                fila.configure(fg_color="transparent")
+
         tasa = self.bcv.obtener_tasa_con_respaldo().get('tasa', 0)
 
         cols = [(f"#{producto.id_producto}", 0.025), (producto.nombre_producto, 0.10), 
@@ -293,10 +301,15 @@ class VistaNuevaTransac(ctk.CTkToplevel):
                 (f"${producto.precio_venta:.2f} / Bs {producto.precio_venta * tasa:.2f}", 0.52), (f"${producto.precio_compra:.2f} / Bs {producto.precio_compra * tasa:.2f}", 0.73), (str(producto.stock_actual), 0.94)]
         
         for txt, rx in cols:
-            l = ctk.CTkLabel(fila, text=txt, font=("Segoe UI", 13))
+            l = ctk.CTkLabel(fila, text=txt, font=("Segoe UI", 13), text_color=self.colores["texto_principal"])
             l.place(relx=rx, rely=0.5, anchor="w")
             l.bind("<Button-1>", on_click)
+            l.bind("<Enter>", on_enter)
+            l.bind("<Leave>", on_leave)
+
         fila.bind("<Button-1>", on_click)
+        fila.bind("<Enter>", on_enter)
+        fila.bind("<Leave>", on_leave)
 
     def mostrar_productos(self):
         for child in self.scroll_productos.winfo_children(): child.destroy()
