@@ -1,6 +1,8 @@
 import customtkinter as ctk
 from servicios.ProductoDAO import ProductoDAO
 from modelos.Producto import Producto
+from vistas.VistaCategoria import VistaCategoria
+from vistas.VistaMarca import VistaMarca
 
 class VentanaVerificacion(ctk.CTkToplevel):
     """Ventana de aviso personalizada para Éxito o Error."""
@@ -118,6 +120,22 @@ class VistaCrearProducto(ctk.CTkToplevel):
 
         self.crear_combo(scroll_frame, "Categoría", self.categorias, "Selecciona Categoría")
         self.crear_combo(scroll_frame, "Marca", self.marcas, "Selecciona Marca")
+        self.btn_crear_marca = ctk.CTkButton(
+            scroll_frame, text="Crear Nueva Marca",
+            width=200, height=35,
+            fg_color=self.color_morado,
+            hover_color=self.color_morado_hover,
+            command=self.abrir_vista_marca
+        )
+        self.btn_crear_marca.pack(pady=(0, 10))
+        self.btn_crear_categoria = ctk.CTkButton(
+            scroll_frame, text="Crear Nueva Categoría",
+            width=200, height=35,
+            fg_color=self.color_morado,
+            hover_color=self.color_morado_hover,
+            command=self.abrir_vista_categoria
+        )
+        self.btn_crear_categoria.pack(pady=(0, 20))
 
         frame_botones = ctk.CTkFrame(self, fg_color="transparent")
         frame_botones.pack(pady=20, fill="x")
@@ -135,6 +153,26 @@ class VistaCrearProducto(ctk.CTkToplevel):
             command=self.destroy
         )
         btn_cancelar.pack(side="right", padx=(40, 10), expand=True, fill="x")
+
+    def abrir_vista_marca(self):
+        def actualizar_marcas():
+            self.marcas = ProductoDAO().obtener_marcas()
+            combo_marca = self.campos["Marca"]
+            combo_marca.configure(values=[f"{id_val} - {n}" for id_val, n in self.marcas])
+            combo_marca.set("Selecciona Marca")
+
+        vista_marca = VistaMarca(self, actualizar_marcas)
+        vista_marca.grab_set()
+
+    def abrir_vista_categoria(self):
+        def actualizar_categorias():
+            self.categorias = ProductoDAO().obtener_categorias()
+            combo_categoria = self.campos["Categoría"]
+            combo_categoria.configure(values=[f"{id_val} - {n}" for id_val, n in self.categorias])
+            combo_categoria.set("Selecciona Categoría")
+
+        vista_categoria = VistaCategoria(self, actualizar_categorias)
+        vista_categoria.grab_set()
 
     def _guardar(self):
         try:
