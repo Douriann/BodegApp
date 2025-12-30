@@ -323,13 +323,44 @@ class VistaNuevaTransac(ctk.CTkToplevel):
         self.label_total_usd.configure(text="Total (USD): $0.00")
         self.label_total_bs.configure(text="Total (BS): Bs 0.00")
 
+    # NUEVA FUNCIÓN PARA EL TICKET
     def generar_ticket_pdf(self, trans, detalles):
         try:
-            if not os.path.exists("tickets"): os.makedirs("tickets")
+            if not os.path.exists("tickets"):
+                os.makedirs("tickets")
+            
             nombre_archivo = f"tickets/Ticket_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
             c = canvas.Canvas(nombre_archivo, pagesize=(58 * mm, 150 * mm))
+            
             c.setFont("Helvetica-Bold", 10)
             c.drawCentredString(29 * mm, 142 * mm, "MI BODEGAPP")
+            c.setFont("Helvetica", 7)
+            c.drawCentredString(29 * mm, 138 * mm, f"FECHA: {trans.fecha_transaccion}")
+            c.drawCentredString(29 * mm, 134 * mm, "------------------------------------------")
+            
+            y = 125 * mm
+            c.setFont("Helvetica-Bold", 7)
+            c.drawString(5 * mm, y, "CANT  PROD")
+            c.drawRightString(53 * mm, y, "TOTAL")
+            
+            y -= 4 * mm
+            c.setFont("Helvetica", 7)
+            for i, p in enumerate(self.lista_productos_seleccionados):
+                c.drawString(5 * mm, y, f"{self.lista_cantidades[i]}x {p.nombre_producto[:15]}")
+                c.drawRightString(53 * mm, y, f"${self.lista_subtotales[i]:,.2f}")
+                y -= 4 * mm
+            
+            c.drawCentredString(29 * mm, y, "------------------------------------------")
+            y -= 5 * mm
+            c.setFont("Helvetica-Bold", 8)
+            c.drawString(5 * mm, y, "TOTAL USD:")
+            c.drawRightString(53 * mm, y, f"${trans.total:,.2f}")
+            y -= 4 * mm
+            tasa = self.bcv.obtener_tasa_con_respaldo().get('tasa', 0)
+            c.drawString(5 * mm, y, "TOTAL BS:")
+            c.drawRightString(53 * mm, y, f"Bs {trans.total * tasa:,.2f}")
+            
             c.save()
             os.startfile(os.path.abspath(nombre_archivo))
-        except Exception as e: print(f"Error ticket: {e}")
+        except Exception as e:
+            print(f"Error al crear ticket: {e}")

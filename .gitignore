@@ -67,3 +67,6 @@ desktop.ini
 base_de_datos/*
 
 !base_de_datos/.gitkeep
+
+#  Ignorar carpeta de tickets
+tickets/*
