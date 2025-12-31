@@ -119,6 +119,14 @@ class VistaCrearProducto(ctk.CTkToplevel):
         crear_campo("Stock Actual", "Ej: 50")
 
         self.crear_combo(scroll_frame, "Categoría", self.categorias, "Selecciona Categoría")
+        self.btn_crear_categoria = ctk.CTkButton(
+            scroll_frame, text="Crear Nueva Categoría",
+            width=200, height=35,
+            fg_color=self.color_morado,
+            hover_color=self.color_morado_hover,
+            command=self.abrir_vista_categoria
+        )
+        self.btn_crear_categoria.pack(pady=(10, 10))
         self.crear_combo(scroll_frame, "Marca", self.marcas, "Selecciona Marca")
         self.btn_crear_marca = ctk.CTkButton(
             scroll_frame, text="Crear Nueva Marca",
@@ -127,16 +135,7 @@ class VistaCrearProducto(ctk.CTkToplevel):
             hover_color=self.color_morado_hover,
             command=self.abrir_vista_marca
         )
-        self.btn_crear_marca.pack(pady=(0, 10))
-        self.btn_crear_categoria = ctk.CTkButton(
-            scroll_frame, text="Crear Nueva Categoría",
-            width=200, height=35,
-            fg_color=self.color_morado,
-            hover_color=self.color_morado_hover,
-            command=self.abrir_vista_categoria
-        )
-        self.btn_crear_categoria.pack(pady=(0, 20))
-
+        self.btn_crear_marca.pack(pady=(10, 10))
         frame_botones = ctk.CTkFrame(self, fg_color="transparent")
         frame_botones.pack(pady=20, fill="x")
 
