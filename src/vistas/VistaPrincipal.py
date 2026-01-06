@@ -13,8 +13,8 @@ class VistaPrincipal(ctk.CTk):
         # Configuración de la ventana principal
         self.title("Sistema de Gestión de Inventario")
 
-        anchoVist = 1000
-        altoVist = 600
+        anchoVist = 1100
+        altoVist = 650
         
         self.update_idletasks()
         
