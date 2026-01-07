@@ -57,30 +57,21 @@ class VistaAgente(ctk.CTkToplevel):
         ctk.CTkLabel(header, text="Sophie — Asistente de la Tienda",
                      font=self.FONT_TITLE, text_color=self.TEXT_MAIN).pack(side="left")
 
-        # --- Área de conversación ---
-        frame_text = ctk.CTkFrame(self, fg_color=self.CARD_COLOR, corner_radius=10,
-                                  border_width=1, border_color=self.PRIMARY_DARK)
-        frame_text.pack(fill="both", expand=True, padx=16, pady=(8, 12))
+        # --- Área de conversación (burbujas de chat) ---
+        chat_container = ctk.CTkFrame(self, fg_color=self.CARD_COLOR, corner_radius=10,
+                                      border_width=1, border_color=self.PRIMARY_DARK)
+        chat_container.pack(fill="both", expand=True, padx=16, pady=(8, 12))
 
-        self.textbox = ctk.CTkTextbox(frame_text, width=560, height=320,
-                                       font=("Segoe UI", 15),
-                                       text_color=self.TEXT_MAIN)
-        self.textbox.pack(side="left", fill="both", expand=True, padx=(8, 0), pady=8)
+        self.chat_frame = ctk.CTkScrollableFrame(
+            chat_container,
+            fg_color=self.CARD_COLOR,
+            scrollbar_button_color=self.PRIMARY_DARK,
+            scrollbar_button_hover_color=self.PRIMARY,
+        )
+        self.chat_frame.pack(fill="both", expand=True, padx=8, pady=8)
 
-        scrollbar = ctk.CTkScrollbar(frame_text, orientation="vertical", command=self.textbox.yview,
-                                     button_color=self.PRIMARY_DARK, button_hover_color=self.PRIMARY)
-        scrollbar.pack(side="right", fill="y", padx=(0, 8), pady=8)
-
-        try:
-            self.textbox.configure(yscrollcommand=scrollbar.set)
-        except Exception:
-            pass
-
-        # Hacer el textbox de solo lectura inicialmente
-        try:
-            self.textbox.configure(state="disabled")
-        except Exception:
-            pass
+        # Contador de mensajes para posible uso futuro
+        self._msg_count = 0
 
         # --- Controles inferiores (input + acciones) ---
         controls = ctk.CTkFrame(self, fg_color="transparent")
@@ -118,25 +109,14 @@ class VistaAgente(ctk.CTkToplevel):
             actions,
             text="Empezar nueva conversación",
             height=42,
-            width=220,
+            width=260,
             font=self.FONT_BUTTON,
             fg_color=self.PRIMARY,
             hover_color=self.PRIMARY_DARK,
             command=self.enviar_primer_mensaje
         )
-        self.btn_emp_conversacion.pack(side="left")
-
-        btn_cerrar = ctk.CTkButton(
-            actions,
-            text="Cerrar",
-            height=42,
-            width=120,
-            font=self.FONT_BUTTON,
-            fg_color="#552575",
-            hover_color="#b874e5",
-            command=self.destroy
-        )
-        btn_cerrar.pack(side="right")
+        # Centrar el botón en la barra de acciones
+        self.btn_emp_conversacion.pack(pady=4)
 
         # Estado inicial: entry y enviar deshabilitados
         try:
@@ -145,20 +125,51 @@ class VistaAgente(ctk.CTkToplevel):
         except Exception:
             pass
     
+    def _agregar_burbuja(self, texto: str, emisor: str):
+        """Crea una burbuja de chat para usuario o Sophie."""
+        self._msg_count += 1
+        es_usuario = (emisor == "usuario")
+
+        fila = ctk.CTkFrame(self.chat_frame, fg_color="transparent")
+        fila.pack(fill="x", pady=4)
+
+        color_burbuja = self.PRIMARY if es_usuario else "#333333"
+        texto_color = "white"
+
+        cont_burbuja = ctk.CTkFrame(
+            fila,
+            fg_color=color_burbuja,
+            corner_radius=16
+        )
+        cont_burbuja.pack(
+            side="right" if es_usuario else "left",
+            padx=8,
+            pady=2
+        )
+
+        lbl = ctk.CTkLabel(
+            cont_burbuja,
+            text=texto,
+            font=("Segoe UI", 14),
+            text_color=texto_color,
+            justify="left",
+            wraplength=460,
+        )
+        lbl.pack(padx=10, pady=8)
+
+        # Auto-scroll al final
+        try:
+            self.after(50, lambda: self.chat_frame._parent_canvas.yview_moveto(1.0))
+        except Exception:
+            pass
+
     def enviar_mensaje(self):
         mensaje = (self.entry_enviar.get() or "").strip()
         if not mensaje:
             return
-        # Mostrar el mensaje del usuario en textbox (temporalmente habilitar para insertar)
-        try:
-            self.textbox.configure(state="normal")
-        except Exception:
-            pass
-        self.textbox.insert("end", f"Tú: {mensaje}\n")
-        try:
-            self.textbox.configure(state="disabled")
-        except Exception:
-            pass
+
+        # Mostrar burbuja del usuario
+        self._agregar_burbuja(f"Tú: {mensaje}", "usuario")
         self.entry_enviar.delete(0, "end")
 
         def tarea():
@@ -172,19 +183,7 @@ class VistaAgente(ctk.CTkToplevel):
         threading.Thread(target=tarea, daemon=True).start()
 
     def _mostrar_respuesta(self, respuesta):
-        try:
-            self.textbox.configure(state="normal")
-        except Exception:
-            pass
-        self.textbox.insert("end", f"Sophie: {respuesta}\n")
-        try:
-            self.textbox.see("end")
-        except Exception:
-            pass
-        try:
-            self.textbox.configure(state="disabled")
-        except Exception:
-            pass
+        self._agregar_burbuja(f"Sophie: {respuesta}", "sophie")
     
     def enviar_primer_mensaje(self):
         primer_mensaje = """
