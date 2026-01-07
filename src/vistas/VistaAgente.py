@@ -2,6 +2,8 @@
 import customtkinter as ctk
 from servicios.Sophia import Agente
 from google import genai
+from ConfigRutas import rutas 
+from PIL import Image
 import os
 import threading
 try:
@@ -40,7 +42,7 @@ class VistaAgente(ctk.CTkToplevel):
         except Exception:
             pass
 
-        ancho, alto = 720, 520
+        ancho, alto = 600, 600
         self.update_idletasks()
         try:
             pant_w = self.winfo_screenwidth()
@@ -69,6 +71,16 @@ class VistaAgente(ctk.CTkToplevel):
             scrollbar_button_hover_color=self.PRIMARY,
         )
         self.chat_frame.pack(fill="both", expand=True, padx=8, pady=8)
+
+        # Iconos de perfil para las burbujas (Sophie y usuario)
+        try:
+            img_sophie = Image.open(rutas.obtener_ruta_imagen("ia-sophie.png"))
+            img_usuario = Image.open(rutas.obtener_ruta_imagen("icons-usuario.png"))
+            self.icono_sophie_chat = ctk.CTkImage(img_sophie, size=(30, 30))
+            self.icono_usuario_chat = ctk.CTkImage(img_usuario, size=(30, 30))
+        except Exception:
+            self.icono_sophie_chat = None
+            self.icono_usuario_chat = None
 
         # Contador de mensajes para posible uso futuro
         self._msg_count = 0
@@ -126,34 +138,80 @@ class VistaAgente(ctk.CTkToplevel):
             pass
     
     def _agregar_burbuja(self, texto: str, emisor: str):
-        """Crea una burbuja de chat para usuario o Sophie."""
+        """Crea una burbuja de chat con avatar para usuario o Sophie."""
         self._msg_count += 1
         es_usuario = (emisor == "usuario")
 
         fila = ctk.CTkFrame(self.chat_frame, fg_color="transparent")
-        fila.pack(fill="x", pady=4)
+        fila.pack(fill="x", pady=4, padx=4)
+
+        # Contenedor horizontal que agrupa avatar + burbuja
+        cont_linea = ctk.CTkFrame(fila, fg_color="transparent")
+        cont_linea.pack(anchor="e" if es_usuario else "w", fill="x")
 
         color_burbuja = self.PRIMARY if es_usuario else "#333333"
         texto_color = "white"
 
-        cont_burbuja = ctk.CTkFrame(
-            fila,
-            fg_color=color_burbuja,
-            corner_radius=16
-        )
-        cont_burbuja.pack(
-            side="right" if es_usuario else "left",
-            padx=8,
-            pady=2
-        )
+        if es_usuario:
+            # Burbuja a la derecha y avatar del usuario al extremo derecho
+            burbuja = ctk.CTkFrame(
+                cont_linea,
+                fg_color=color_burbuja,
+                corner_radius=16,
+            )
+            burbuja.pack(side="right", padx=(6, 0), pady=2)
+
+            avatar_circle = ctk.CTkFrame(
+                cont_linea,
+                width=50,
+                height=50,
+                corner_radius=25,
+                fg_color="#552575",
+                border_width=2,
+                border_color=self.PRIMARY_DARK,
+            )
+            avatar_circle.pack(side="right")
+
+            if getattr(self, "icono_usuario_chat", None):
+                ctk.CTkLabel(
+                    avatar_circle,
+                    text="",
+                    image=self.icono_usuario_chat,
+                ).place(relx=0.5, rely=0.5, anchor="center")
+        else:
+            # Avatar de Sophie a la izquierda y burbuja a la derecha
+            avatar_circle = ctk.CTkFrame(
+                cont_linea,
+                width=50,
+                height=50,
+                corner_radius=25,
+                fg_color="#552575",
+                border_width=2,
+                border_color=self.PRIMARY_DARK,
+            )
+            avatar_circle.pack(side="left")
+
+            if getattr(self, "icono_sophie_chat", None):
+                ctk.CTkLabel(
+                    avatar_circle,
+                    text="",
+                    image=self.icono_sophie_chat,
+                ).place(relx=0.5, rely=0.5, anchor="center")
+
+            burbuja = ctk.CTkFrame(
+                cont_linea,
+                fg_color=color_burbuja,
+                corner_radius=16,
+            )
+            burbuja.pack(side="left", padx=(6, 0), pady=2)
 
         lbl = ctk.CTkLabel(
-            cont_burbuja,
+            burbuja,
             text=texto,
             font=("Segoe UI", 14),
             text_color=texto_color,
             justify="left",
-            wraplength=460,
+            wraplength=360,
         )
         lbl.pack(padx=10, pady=8)
 
