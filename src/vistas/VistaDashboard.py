@@ -255,9 +255,13 @@ class VistaDashboard(ctk.CTkFrame):
     def crear_vent_agente(self):
         if self.ventana_toplevel is None or not self.ventana_toplevel.winfo_exists():
             self.ventana_toplevel = VistaAgente(self)
-            self.ventana_toplevel.after(100, lambda: self.ventana_toplevel.lift)
+            # Asegurar que la ventana aparezca al frente y con foco
+            self.ventana_toplevel.after(100, lambda: (self.ventana_toplevel.lift(),
+                                                      self.ventana_toplevel.focus_force()))
         else:
-            self.ventana_toplevel.focus()
+            # Si ya existe, traerla al frente y darle foco
+            self.ventana_toplevel.lift()
+            self.ventana_toplevel.focus_force()
 
     #Cuadro de Alerta de Reposicion de Productos
     def crear_cuadro_reposicion(self, df):
