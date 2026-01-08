@@ -39,9 +39,46 @@ class InicializadorDB:
             finally:
                 self.db.desconectar()
 
-    def crear_tablas(self):
-        """Crea las tablas con las restricciones solicitadas si no existen."""
-        
+    def tablas_existen(self) -> bool:
+        """Verifica si existen todas las tablas requeridas."""
+        tablas_requeridas = {
+            "categoria",
+            "marca",
+            "tipo_transaccion",
+            "producto",
+            "transaccion",
+            "detalle_transaccion",
+        }
+
+        conn = self.db.conectar()
+        if not conn:
+            return False
+
+        try:
+            cursor = conn.cursor()
+            placeholders = ",".join("?" * len(tablas_requeridas))
+            cursor.execute(
+                f"""
+                SELECT name 
+                FROM sqlite_master 
+                WHERE type = 'table' AND name IN ({placeholders})
+                """,
+                tuple(tablas_requeridas),
+            )
+            existentes = {row[0] for row in cursor.fetchall()}
+            return existentes == tablas_requeridas
+        finally:
+            self.db.desconectar()
+
+    def crear_tablas(self) -> bool:
+        """Crea las tablas con las restricciones solicitadas si no existen.
+        Devuelve True si creó algo, False si ya existían.
+        """
+
+        if self.tablas_existen():
+            print("--- Tablas ya existen, no se requiere creación ---")
+            return False
+
         sql_creation = """
         -- 1. Tabla Categoría
         CREATE TABLE IF NOT EXISTS categoria (
@@ -110,6 +147,7 @@ class InicializadorDB:
         );
         """
         self._ejecutar_script(sql_creation)
+        return True
 
     def insertar_datos_semilla(self):
             """Puebla la base de datos con información inicial y ventas históricas."""
