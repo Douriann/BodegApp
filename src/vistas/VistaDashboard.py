@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from PIL import Image
+import threading
 from servicios.ProductoDAO import ProductoDAO
 from servicios.BCVdatos import BcvScraper
 from servicios.ServTransac import ServTransac
@@ -137,37 +138,71 @@ class VistaDashboard(ctk.CTkFrame):
         self.tooltip.configure(fg_color="#ab3df4")
 
     def actualizar_vista(self):
+        # Obtener el texto de búsqueda actual y mostrar un mensaje de carga
+        texto = self.entry_busqueda.get().lower().strip()
+
         for widget in self.main_container.winfo_children():
             widget.destroy()
-            
+
+        ctk.CTkLabel(
+            self.main_container,
+            text="Cargando datos...",
+            font=("Segoe UI", 16),
+            text_color="gray"
+        ).pack(pady=60)
+
+        # Lanzar el trabajo pesado (scraping, consultas, DataFrames) en un hilo separado
+        hilo = threading.Thread(
+            target=self._cargar_datos_en_segundo_plano,
+            args=(texto,),
+            daemon=True
+        )
+        hilo.start()
+
+    def _cargar_datos_en_segundo_plano(self, texto):
+        """Obtiene datos y métricas en segundo plano para no congelar la UI."""
         df_original = self.obtener_datos_productos()
-        texto = self.entry_busqueda.get().lower().strip()
-        
+
         df = df_original.copy()
         if not df.empty and texto:
-            df = df[(df['Nombre'].str.lower().str.contains(texto)) | 
+            df = df[(df['Nombre'].str.lower().str.contains(texto)) |
                     (df['Marca'].str.lower().str.contains(texto))]
+
+        tasa = self.obtener_tasa_hoy()
+        ventas = self.obtener_ventas_totales()
+
+        # Volver al hilo principal para actualizar la interfaz
+        self.after(0, lambda: self._render_vista(texto, df_original, df, tasa, ventas))
+
+    def _render_vista(self, texto, df_original, df, tasa, ventas):
+        """Reconstruye el dashboard en el hilo principal con los datos ya calculados."""
+        # Si el usuario cambió el texto de búsqueda mientras cargaba, refrescar con el nuevo texto
+        texto_actual = self.entry_busqueda.get().lower().strip()
+        if texto_actual != texto:
+            self.actualizar_vista()
+            return
+
+        for widget in self.main_container.winfo_children():
+            widget.destroy()
 
         if df.empty and not df_original.empty:
             # Sophie se queda pegada en ROJO
             self.tooltip_label.configure(text=f"No hay nada resultados para '{texto}' 🔍")
             self.tooltip.configure(fg_color=self.NEON_RED)
             self.tooltip.place(relx=0.78, rely=0.81, anchor="center")
-            ctk.CTkLabel(self.main_container, text="No hay coincidencias.", 
+            ctk.CTkLabel(self.main_container, text="No hay coincidencias.",
                          font=("Segoe UI", 16), text_color="gray").pack(pady=100)
             return
         else:
             # Si hay resultados, limpiar estado de error
             self._on_leave_ia(None)
 
-        tasa = self.obtener_tasa_hoy()
-        ventas = self.obtener_ventas_totales()
         self.crear_kpis_neon(df, tasa, ventas)
-        
+
         charts_frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
         charts_frame.pack(fill="x", pady=20)
         charts_frame.grid_columnconfigure((0, 1), weight=1)
-        
+
         self.grafico_dona_gordita(df, charts_frame)
         self.grafico_top_vendidos(charts_frame)
         self.crear_cuadro_reposicion(df)
