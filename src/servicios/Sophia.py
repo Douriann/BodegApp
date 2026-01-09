@@ -1,6 +1,7 @@
 from google import genai
 import json
 import os
+import unicodedata
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -10,6 +11,9 @@ except Exception:
 from servicios.ServBusqProduc import ServBusqProduc
 from servicios.ServTransac import ServTransac
 from servicios.ProductoDAO import ProductoDAO
+from servicios.ServProdStockBajo import ServProdStockBajo
+
+servicio_stock_bajo = ServProdStockBajo()
 
 servicio_busqueda = ProductoDAO()
 servicio_transaccion = ServTransac()
@@ -21,6 +25,39 @@ def obtener_productos():
 def obtener_transacciones():
     transacciones = servicio_transaccion.consultar_transacciones()
     return transacciones
+
+def normalizar(texto: str) -> str:
+    # Quitar tildes y normalizar a minúsculas
+    texto = unicodedata.normalize("NFD", texto)
+    texto = texto.encode("ascii", "ignore").decode("utf-8")
+    return texto.strip().lower()
+
+def existe_categoria(nombre_categoria: str) -> bool:
+    categorias = servicio_busqueda.obtener_categorias()
+    for _, descripcion in categorias:
+        if normalizar(descripcion) in normalizar(nombre_categoria):
+            return True
+    return False
+
+def existe_marca(nombre_marca: str) -> bool:
+    marcas = servicio_busqueda.obtener_marcas()
+    for _, nombre in marcas:
+        if normalizar(nombre) in normalizar(nombre_marca):
+            return True
+    return False
+
+def productos_bajo_stock():
+    productos = servicio_stock_bajo.obtener_productos_bajo_stock()
+    resultado = []
+    for p in productos:
+        resultado.append({
+            "id_producto": p.id_producto,
+            "nombre_producto": p.nombre_producto,
+            "stock_actual": p.stock_actual,
+            "stock_minimo": p.stock_minimo
+        })
+    return resultado
+
 
 api_key = os.getenv("GEMINI_API_KEY")
 if not api_key:
@@ -57,6 +94,49 @@ transactions_tool = {
     },
 }
 
+category_tool = {
+    "type": "function",
+    "name": "existe_categoria",
+    "description": "Verifica si existe una categoría de productos en la base de datos.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "nombre_categoria": {
+                "type": "string",
+                "description": "Nombre de la categoría a verificar"
+            }
+        },
+        "required": ["nombre_categoria"]
+    },
+}
+
+brand_tool = {
+    "type": "function",
+    "name": "existe_marca",
+    "description": "Verifica si existe una marca de producto en la base de datos.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "nombre_marca": {
+                "type": "string",
+                "description": "Nombre de la marca a verificar"
+            }
+        },
+        "required": ["nombre_marca"]
+    },
+}
+
+low_stock_tool = {
+    "type": "function",
+    "name": "productos_bajo_stock",
+    "description": "Devuelve productos cuyo stock actual es menor al stock mínimo.",
+    "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+    },
+}
+
 
 class Agente:
     """Clase que maneja interacciones con el modelo y soporta llamadas a herramientas (tools).
@@ -66,7 +146,7 @@ class Agente:
         respuesta = agent.send("Hola, mi nombre es Adrian.")
     """
 
-    def __init__(self, client, tools=[product_tool, transactions_tool], model="gemini-2.5-flash-lite"):
+    def __init__(self, client, tools=[product_tool, transactions_tool, category_tool, brand_tool,low_stock_tool], model="gemini-2.5-flash-lite"):
         self.client = client
         self.tools = tools or []
         self.model = model
@@ -136,6 +216,56 @@ class Agente:
                         })
 
                     result_json = json.dumps(trans_serial, ensure_ascii=False)
+
+                    interaction = self.client.interactions.create(
+                        model=self.model,
+                        previous_interaction_id=interaction.id,
+                        input=[{
+                            "type": "function_result",
+                            "name": output.name,
+                            "call_id": output.id,
+                            "result": result_json
+                        }]
+                    )
+                    self.last_interaction_id = interaction.id
+
+                elif output.name == "existe_categoria":
+                    nombre = output.arguments.get("nombre_categoria")
+                    resultado = existe_categoria(nombre)
+                    result_json = json.dumps({"existe": resultado}, ensure_ascii=False)
+
+                    interaction = self.client.interactions.create(
+                        model=self.model,
+                        previous_interaction_id=interaction.id,
+                        input=[{
+                            "type": "function_result",
+                            "name": output.name,
+                            "call_id": output.id,
+                            "result": result_json
+                        }]
+                    )
+                    self.last_interaction_id = interaction.id
+
+                elif output.name == "existe_marca":
+                    nombre = output.arguments.get("nombre_marca")
+                    resultado = existe_marca(nombre)
+                    result_json = json.dumps({"existe": resultado}, ensure_ascii=False)
+
+                    interaction = self.client.interactions.create(
+                        model=self.model,
+                        previous_interaction_id=interaction.id,
+                        input=[{
+                            "type": "function_result",
+                            "name": output.name,
+                            "call_id": output.id,
+                            "result": result_json
+                        }]
+                    )
+                    self.last_interaction_id = interaction.id
+                    
+                elif output.name == "productos_bajo_stock":
+                    productos = productos_bajo_stock()
+                    result_json = json.dumps(productos, ensure_ascii=False)
 
                     interaction = self.client.interactions.create(
                         model=self.model,

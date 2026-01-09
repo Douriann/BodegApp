@@ -74,6 +74,7 @@ class VistaCrearProducto(ctk.CTkToplevel):
         self._crear_formulario()
 
     def crear_combo(self, parent, nombre, opciones, placeholder):
+
         label = ctk.CTkLabel(parent, text=nombre, font=("Segoe UI", 13, "bold"))
         label.pack(pady=(10, 0))
         
@@ -94,6 +95,7 @@ class VistaCrearProducto(ctk.CTkToplevel):
         self.campos[nombre] = combo
 
     def _crear_formulario(self):
+
         scroll_frame = ctk.CTkScrollableFrame(
             self, fg_color="transparent", 
             scrollbar_button_color="#ab3df4",
