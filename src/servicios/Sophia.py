@@ -11,6 +11,9 @@ except Exception:
 from servicios.ServBusqProduc import ServBusqProduc
 from servicios.ServTransac import ServTransac
 from servicios.ProductoDAO import ProductoDAO
+from servicios.ServProdStockBajo import ServProdStockBajo
+
+servicio_stock_bajo = ServProdStockBajo()
 
 servicio_busqueda = ProductoDAO()
 servicio_transaccion = ServTransac()
@@ -42,6 +45,19 @@ def existe_marca(nombre_marca: str) -> bool:
         if normalizar(nombre) in normalizar(nombre_marca):
             return True
     return False
+
+def productos_bajo_stock():
+    productos = servicio_stock_bajo.obtener_productos_bajo_stock()
+    resultado = []
+    for p in productos:
+        resultado.append({
+            "id_producto": p.id_producto,
+            "nombre_producto": p.nombre_producto,
+            "stock_actual": p.stock_actual,
+            "stock_minimo": p.stock_minimo
+        })
+    return resultado
+
 
 api_key = os.getenv("GEMINI_API_KEY")
 if not api_key:
@@ -110,6 +126,18 @@ brand_tool = {
     },
 }
 
+low_stock_tool = {
+    "type": "function",
+    "name": "productos_bajo_stock",
+    "description": "Devuelve productos cuyo stock actual es menor al stock mínimo.",
+    "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+    },
+}
+
+
 class Agente:
     """Clase que maneja interacciones con el modelo y soporta llamadas a herramientas (tools).
 
@@ -118,7 +146,7 @@ class Agente:
         respuesta = agent.send("Hola, mi nombre es Adrian.")
     """
 
-    def __init__(self, client, tools=[product_tool, transactions_tool, category_tool, brand_tool], model="gemini-2.5-flash-lite"):
+    def __init__(self, client, tools=[product_tool, transactions_tool, category_tool, brand_tool,low_stock_tool], model="gemini-2.5-flash-lite"):
         self.client = client
         self.tools = tools or []
         self.model = model
@@ -234,6 +262,23 @@ class Agente:
                         }]
                     )
                     self.last_interaction_id = interaction.id
+                    
+                elif output.name == "productos_bajo_stock":
+                    productos = productos_bajo_stock()
+                    result_json = json.dumps(productos, ensure_ascii=False)
+
+                    interaction = self.client.interactions.create(
+                        model=self.model,
+                        previous_interaction_id=interaction.id,
+                        input=[{
+                            "type": "function_result",
+                            "name": output.name,
+                            "call_id": output.id,
+                            "result": result_json
+                        }]
+                    )
+                    self.last_interaction_id = interaction.id
+
                 else:
                     # Función desconocida
                     interaction = self.client.interactions.create(
