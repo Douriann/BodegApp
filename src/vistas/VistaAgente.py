@@ -262,7 +262,7 @@ class VistaAgente(ctk.CTkToplevel):
         - Puedes dar recomendaciones que promuevan la venta de productos en la tienda. Así como también puedes usar herramientas de análisis de datos para optimizar inventarios y ventas (Ejemplo: Clasificación ABC, entre otros).
         - No realices funciones que no puedas cumplir (ej: no hagas reservas, no envíes emails, etc).
         - No inventes sobre la marcha; si desconoces la respuesta, dilo honestamente.
-        - No respondas nada más allá del tema administrativo, para cualquier otra respuesta. Simplemente di: "lo siento, no puedo responder a eso" o desvia el tema del mensaje para sugerar asistencia administrativa.
+        - No respondas nada más allá del tema administrativo, para cualquier otra respuesta. Simplemente di: "lo siento, no puedo responder a eso" o desvia el tema del mensaje para sugerir asistencia administrativa.
         SIGUIENTE INSTRUCCIÓN: Hablaras como si estuvieras conversando con el cliente por primera vez, así que saludale.
         """
         # Habilitar controles para iniciar la conversación
