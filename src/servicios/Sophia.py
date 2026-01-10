@@ -12,11 +12,13 @@ from servicios.ServBusqProduc import ServBusqProduc
 from servicios.ServTransac import ServTransac
 from servicios.ProductoDAO import ProductoDAO
 from servicios.ServProdStockBajo import ServProdStockBajo
+from servicios.ServConsultSophia import ServConsultSophia
 
 servicio_stock_bajo = ServProdStockBajo()
 
 servicio_busqueda = ProductoDAO()
 servicio_transaccion = ServTransac()
+servicio_consultas = ServConsultSophia()
 
 def obtener_productos():
     productos = servicio_busqueda.consultar_todos()
@@ -57,6 +59,48 @@ def productos_bajo_stock():
             "stock_minimo": p.stock_minimo
         })
     return resultado
+
+
+def top_productos(limite: int | None = None):
+    """Obtiene el top de productos vendidos (histórico), opcionalmente limitado.
+
+    Retorna una lista de diccionarios con nombre_producto y cantidad.
+    """
+    detalles = servicio_consultas.consult_top_productos(limite=limite)
+    resultado = []
+    for d in detalles:
+        resultado.append({
+            "nombre_producto": d.nombre_producto,
+            "cantidad": d.cantidad_producto,
+        })
+    return resultado
+
+
+def top_productos_mes_actual(limite: int | None = None):
+    """Obtiene el top de productos vendidos en el mes actual, opcionalmente limitado.
+
+    Retorna una lista de diccionarios con nombre_producto y cantidad.
+    """
+    detalles = servicio_consultas.consult_top_productos_mes_actual(limite=limite)
+    resultado = []
+    for d in detalles:
+        resultado.append({
+            "nombre_producto": d.nombre_producto,
+            "cantidad": d.cantidad_producto,
+        })
+    return resultado
+
+
+def total_ventas():
+    """Obtiene el monto total de ventas históricas (solo ventas)."""
+    total = servicio_consultas.consult_total_ventas()
+    return {"total_ventas": total}
+
+
+def total_ventas_dia_actual():
+    """Obtiene el monto total de ventas del día actual (solo ventas)."""
+    total = servicio_consultas.consult_total_ventas_dia_actual()
+    return {"total_ventas_dia": total}
 
 
 api_key = os.getenv("GEMINI_API_KEY")
@@ -138,6 +182,64 @@ low_stock_tool = {
 }
 
 
+top_products_tool = {
+    "type": "function",
+    "name": "top_productos",
+    "description": "Devuelve el top de productos más vendidos (histórico), con límite opcional.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "limite": {
+                "type": "integer",
+                "description": "Cantidad máxima de productos a devolver. Si se omite, no se aplica límite."
+            }
+        },
+        "required": []
+    },
+}
+
+
+top_products_mes_actual_tool = {
+    "type": "function",
+    "name": "top_productos_mes_actual",
+    "description": "Devuelve el top de productos más vendidos en el mes actual, con límite opcional.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "limite": {
+                "type": "integer",
+                "description": "Cantidad máxima de productos a devolver. Si se omite, no se aplica límite."
+            }
+        },
+        "required": []
+    },
+}
+
+
+total_ventas_tool = {
+    "type": "function",
+    "name": "total_ventas",
+    "description": "Devuelve el monto total histórico de ventas (id_tipo = 2).",
+    "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+    },
+}
+
+
+total_ventas_dia_actual_tool = {
+    "type": "function",
+    "name": "total_ventas_dia_actual",
+    "description": "Devuelve el monto total de ventas del día actual (id_tipo = 2).",
+    "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+    },
+}
+
+
 class Agente:
     """Clase que maneja interacciones con el modelo y soporta llamadas a herramientas (tools).
 
@@ -146,7 +248,7 @@ class Agente:
         respuesta = agent.send("Hola, mi nombre es Adrian.")
     """
 
-    def __init__(self, client, tools=[product_tool, transactions_tool, category_tool, brand_tool,low_stock_tool], model="gemini-2.5-flash-lite"):
+    def __init__(self, client, tools=[product_tool, transactions_tool, category_tool, brand_tool, low_stock_tool, top_products_tool, top_products_mes_actual_tool, total_ventas_tool, total_ventas_dia_actual_tool], model="gemini-2.5-flash-lite"):
         self.client = client
         self.tools = tools or []
         self.model = model
@@ -266,6 +368,72 @@ class Agente:
                 elif output.name == "productos_bajo_stock":
                     productos = productos_bajo_stock()
                     result_json = json.dumps(productos, ensure_ascii=False)
+
+                    interaction = self.client.interactions.create(
+                        model=self.model,
+                        previous_interaction_id=interaction.id,
+                        input=[{
+                            "type": "function_result",
+                            "name": output.name,
+                            "call_id": output.id,
+                            "result": result_json
+                        }]
+                    )
+                    self.last_interaction_id = interaction.id
+
+                elif output.name == "top_productos":
+                    limite = output.arguments.get("limite")
+                    productos = top_productos(limite=limite)
+                    result_json = json.dumps(productos, ensure_ascii=False)
+
+                    interaction = self.client.interactions.create(
+                        model=self.model,
+                        previous_interaction_id=interaction.id,
+                        input=[{
+                            "type": "function_result",
+                            "name": output.name,
+                            "call_id": output.id,
+                            "result": result_json
+                        }]
+                    )
+                    self.last_interaction_id = interaction.id
+
+                elif output.name == "top_productos_mes_actual":
+                    limite = output.arguments.get("limite")
+                    productos = top_productos_mes_actual(limite=limite)
+                    result_json = json.dumps(productos, ensure_ascii=False)
+
+                    interaction = self.client.interactions.create(
+                        model=self.model,
+                        previous_interaction_id=interaction.id,
+                        input=[{
+                            "type": "function_result",
+                            "name": output.name,
+                            "call_id": output.id,
+                            "result": result_json
+                        }]
+                    )
+                    self.last_interaction_id = interaction.id
+
+                elif output.name == "total_ventas":
+                    resultado = total_ventas()
+                    result_json = json.dumps(resultado, ensure_ascii=False)
+
+                    interaction = self.client.interactions.create(
+                        model=self.model,
+                        previous_interaction_id=interaction.id,
+                        input=[{
+                            "type": "function_result",
+                            "name": output.name,
+                            "call_id": output.id,
+                            "result": result_json
+                        }]
+                    )
+                    self.last_interaction_id = interaction.id
+
+                elif output.name == "total_ventas_dia_actual":
+                    resultado = total_ventas_dia_actual()
+                    result_json = json.dumps(resultado, ensure_ascii=False)
 
                     interaction = self.client.interactions.create(
                         model=self.model,
