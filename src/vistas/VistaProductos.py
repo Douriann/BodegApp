@@ -241,23 +241,35 @@ class VistaProductos(ctk.CTkFrame):
                       command=lambda: self.confirmar_eliminacion(p)).place(relx=0.90, rely=0.5, anchor="w")
 
     def cargar_datos(self):
-        for child in self.scroll_filas.winfo_children(): child.destroy()
+        for child in self.scroll_filas.winfo_children():
+            child.destroy()
+
+        # Recargar marcas por si se ha creado una nueva
+        self.marcas_dict = self._cargar_diccionario_marcas()
+
         dao = ProductoDAO()
         self.productos_actuales = [p for p in dao.consultar_todos() if p.estatus == 1]
-        for p in self.productos_actuales: self.crear_fila_producto(p)
+        for p in self.productos_actuales:
+            self.crear_fila_producto(p)
         self.actualizar_contador(len(self.productos_actuales))
 
     def buscar_productos(self):
         termino = self.entry_buscar.get().strip()
         if not termino: return
-        for child in self.scroll_filas.winfo_children(): child.destroy()
+        for child in self.scroll_filas.winfo_children():
+            child.destroy()
+
+        # Asegurar que las marcas estén actualizadas también en las búsquedas
+        self.marcas_dict = self._cargar_diccionario_marcas()
+
         dao = ProductoDAO()
         self.productos_actuales = [p for p in dao.buscar_por_nombre(termino) if p.estatus == 1]
         if not self.productos_actuales:
             VentanaVerificacion(self.master.winfo_toplevel(), "SIN RESULTADOS", "No hay coincidencias.")
             self.cargar_datos()
             return
-        for p in self.productos_actuales: self.crear_fila_producto(p)
+        for p in self.productos_actuales:
+            self.crear_fila_producto(p)
         self.actualizar_contador(len(self.productos_actuales))
 
     def actualizar_contador(self, cantidad):

@@ -177,4 +177,14 @@ class VistaTransac(ctk.CTkFrame):
             self.ventana_toplevel.focus()
 
     def recibir_datos_nuevos(self, datos):
+        # Recargar datos de transacciones
         self.cargar_datos()
+
+        # También actualizar el stock en la vista de productos
+        try:
+            if hasattr(self, "controller") and hasattr(self.controller, "frames"):
+                vista_prod = self.controller.frames.get("VistaProductos")
+                if vista_prod and hasattr(vista_prod, "cargar_datos"):
+                    vista_prod.cargar_datos()
+        except Exception as e:
+            print(f"Error actualizando VistaProductos tras nueva transacción: {e}")
