@@ -103,6 +103,49 @@ def total_ventas_dia_actual():
     return {"total_ventas_dia": total}
 
 
+def ultimo_producto():
+    """Obtiene el último producto registrado en la base de datos.
+
+    Retorna un diccionario con todos los campos del producto o None si no existe.
+    """
+    p = servicio_consultas.consult_ultimo_producto()
+    if not p:
+        return None
+    return {
+        "id_producto": p.id_producto,
+        "nombre_producto": p.nombre_producto,
+        "id_categoria": p.id_categoria,
+        "id_marca": p.id_marca,
+        "presentacion": p.presentacion,
+        "unidad_medida": p.unidad_medida,
+        "contenido": p.contenido,
+        "precio_compra": p.precio_compra,
+        "precio_venta": p.precio_venta,
+        "stock_minimo": p.stock_minimo,
+        "stock_actual": p.stock_actual,
+        "estatus": p.estatus,
+    }
+
+
+def productos_ultima_venta():
+    """Obtiene los productos vendidos en la última venta registrada.
+
+    Retorna una lista de diccionarios con nombre_producto, nombre_marca,
+    cantidad, subtotal e id_transaccion. Si no hay ventas, retorna lista vacía.
+    """
+    detalles = servicio_consultas.consult_productos_ultima_venta()
+    resultado = []
+    for d in detalles:
+        resultado.append({
+            "nombre_producto": d.nombre_producto,
+            "nombre_marca": d.nombre_marca,
+            "cantidad": d.cantidad_producto,
+            "subtotal": d.subtotal,
+            "id_transaccion": d.id_transaccion,
+        })
+    return resultado
+
+
 api_key = os.getenv("GEMINI_API_KEY")
 if not api_key:
     raise RuntimeError("GEMINI_API_KEY environment variable is not set. Define it in your environment or in a .env file.")
@@ -240,6 +283,30 @@ total_ventas_dia_actual_tool = {
 }
 
 
+ultimo_producto_tool = {
+    "type": "function",
+    "name": "ultimo_producto",
+    "description": "Devuelve el último producto registrado en la base de datos.",
+    "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+    },
+}
+
+
+productos_ultima_venta_tool = {
+    "type": "function",
+    "name": "productos_ultima_venta",
+    "description": "Devuelve los productos vendidos en la última venta registrada.",
+    "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+    },
+}
+
+
 class Agente:
     """Clase que maneja interacciones con el modelo y soporta llamadas a herramientas (tools).
 
@@ -248,7 +315,7 @@ class Agente:
         respuesta = agent.send("Hola, mi nombre es Adrian.")
     """
 
-    def __init__(self, client, tools=[product_tool, transactions_tool, category_tool, brand_tool, low_stock_tool, top_products_tool, top_products_mes_actual_tool, total_ventas_tool, total_ventas_dia_actual_tool], model="gemini-2.5-flash-lite"):
+    def __init__(self, client, tools=[product_tool, transactions_tool, category_tool, brand_tool, low_stock_tool, top_products_tool, top_products_mes_actual_tool, total_ventas_tool, total_ventas_dia_actual_tool, ultimo_producto_tool, productos_ultima_venta_tool], model="gemini-2.5-flash-lite"):
         self.client = client
         self.tools = tools or []
         self.model = model
@@ -433,6 +500,38 @@ class Agente:
 
                 elif output.name == "total_ventas_dia_actual":
                     resultado = total_ventas_dia_actual()
+                    result_json = json.dumps(resultado, ensure_ascii=False)
+
+                    interaction = self.client.interactions.create(
+                        model=self.model,
+                        previous_interaction_id=interaction.id,
+                        input=[{
+                            "type": "function_result",
+                            "name": output.name,
+                            "call_id": output.id,
+                            "result": result_json
+                        }]
+                    )
+                    self.last_interaction_id = interaction.id
+
+                elif output.name == "ultimo_producto":
+                    resultado = ultimo_producto()
+                    result_json = json.dumps(resultado, ensure_ascii=False)
+
+                    interaction = self.client.interactions.create(
+                        model=self.model,
+                        previous_interaction_id=interaction.id,
+                        input=[{
+                            "type": "function_result",
+                            "name": output.name,
+                            "call_id": output.id,
+                            "result": result_json
+                        }]
+                    )
+                    self.last_interaction_id = interaction.id
+
+                elif output.name == "productos_ultima_venta":
+                    resultado = productos_ultima_venta()
                     result_json = json.dumps(resultado, ensure_ascii=False)
 
                     interaction = self.client.interactions.create(

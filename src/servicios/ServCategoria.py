@@ -23,12 +23,3 @@ class ServCategoria:
             return -1
         finally:
             self.db.desconectar()
-
-#creando prueba
-"""if __name__ == "__main__":
-    servicio_categoria = ServCategoria()
-    nueva_categoria_id = servicio_categoria.crear_categoria("Categoria de Prueba")
-    if nueva_categoria_id != -1:
-        print(f"Categoria creada con ID: {nueva_categoria_id}")
-    else:
-        print("Error al crear la categoria.")"""

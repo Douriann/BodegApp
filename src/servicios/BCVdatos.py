@@ -206,15 +206,3 @@ class BcvScraper:
                 return respaldo[-1]
             return respaldo
         return 0
-
-# --- Bloque de prueba (solo se ejecuta si corres este archivo directamente) ---
-if __name__ == "__main__":
-    scraper = BcvScraper() # Instanciamos la clase
-    resultado = scraper.obtener_tasa_con_respaldo()
-    
-    if resultado and resultado != 0:
-        tasa = resultado.get('tasa') if isinstance(resultado, dict) else resultado
-        fecha = resultado.get('fecha_vigencia') if isinstance(resultado, dict) else None
-        print(f"Tasa resultante: {tasa} Bs (Fecha: {fecha})")
-    else:
-        print("No fue posible obtener la tasa ni un respaldo local. Retornando 0.")

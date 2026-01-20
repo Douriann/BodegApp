@@ -1,6 +1,7 @@
 import sqlite3
 from servicios.ConexionBD import ConexionBD
 from modelos.DetalleProductosTransac import DetalleProductosTransac
+from modelos.Producto import Producto
 
 
 class ServConsultSophia:
@@ -163,6 +164,115 @@ class ServConsultSophia:
 		except sqlite3.Error as e:
 			print(f"Error al consultar total de ventas del día actual: {e}")
 			return 0.0
+		finally:
+			self.db.desconectar()
+
+	def consult_productos_ultima_venta(self):
+		"""Retorna los productos vendidos en la última venta (id_tipo = 2).
+
+		Devuelve una lista de objetos DetalleProductosTransac. Si no hay ventas,
+		retorna una lista vacía.
+		"""
+		conexion = self.db.conectar()
+
+		if not conexion:
+			return []
+
+		lista_detalles = []
+
+		try:
+			cursor = conexion.cursor()
+
+			# 1) Obtener el id de la última transacción de tipo VENTA (id_tipo = 2)
+			query_ultima_venta = """
+				SELECT id_transaccion
+				FROM transaccion
+				WHERE id_tipo = 2 AND estatus = 1
+				ORDER BY id_transaccion DESC
+				LIMIT 1
+			"""
+			cursor.execute(query_ultima_venta)
+			fila = cursor.fetchone()
+			if not fila:
+				return []
+
+			id_ultima_venta = fila[0]
+
+			# 2) Obtener los productos vendidos en esa transacción
+			query_detalles = """
+				SELECT P.nombre_producto, M.nombre_marca, DT.cantidad_producto,
+				       DT.subtotal, DT.id_transaccion
+				FROM detalle_transaccion DT
+				JOIN producto P ON DT.id_producto = P.id_producto
+				JOIN marca M ON P.id_marca = M.id_marca
+				WHERE DT.id_transaccion = ?
+			"""
+			cursor.execute(query_detalles, (id_ultima_venta,))
+			resultados = cursor.fetchall()
+
+			for fila in resultados:
+				# (nombre_producto, nombre_marca, cantidad_producto, subtotal, id_transaccion)
+				detalle = DetalleProductosTransac(
+					nombre_producto=fila[0],
+					nombre_marca=fila[1],
+					cantidad_producto=fila[2],
+					subtotal=fila[3],
+					id_transaccion=fila[4],
+				)
+				lista_detalles.append(detalle)
+
+			return lista_detalles
+
+		except sqlite3.Error as e:
+			print(f"Error al consultar productos de la última venta: {e}")
+			return []
+		finally:
+			self.db.desconectar()
+
+	def consult_ultimo_producto(self):
+		"""Retorna el último producto registrado (por id_producto DESC) como objeto Producto.
+
+		Si no hay productos, retorna None.
+		"""
+		conexion = self.db.conectar()
+
+		if not conexion:
+			return None
+
+		try:
+			cursor = conexion.cursor()
+			query = """
+				SELECT id_producto, nombre_producto, id_categoria, id_marca,
+				       presentacion, unidad_medida, contenido, precio_compra,
+				       precio_venta, stock_minimo, stock_actual, estatus
+				FROM producto P
+				ORDER BY P.id_producto DESC
+				LIMIT 1
+			"""
+			cursor.execute(query)
+			fila = cursor.fetchone()
+			if not fila:
+				return None
+
+			producto = Producto(
+				id_producto=fila[0],
+				nombre_producto=fila[1],
+				id_categoria=fila[2],
+				id_marca=fila[3],
+				presentacion=fila[4],
+				unidad_medida=fila[5],
+				contenido=fila[6],
+				precio_compra=fila[7],
+				precio_venta=fila[8],
+				stock_minimo=fila[9],
+				stock_actual=fila[10],
+				estatus=fila[11],
+			)
+			return producto
+
+		except sqlite3.Error as e:
+			print(f"Error al consultar el último producto: {e}")
+			return None
 		finally:
 			self.db.desconectar()
 
